@@ -11,3 +11,7 @@ type BasicTypeUint8 interface {
 type BasicTypeUint64 interface {
 	GetNative() uint64
 }
+
+type BasicTypeArrayString interface {
+	GetNative() []string
+}
