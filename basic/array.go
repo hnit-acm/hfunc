@@ -11,18 +11,19 @@ func (s Array) GetNative() []interface{} {
 	return s
 }
 
-type ConcatFilter func(s *strings.Builder, elem interface{})
+type ConcatFilterFunc func(s *strings.Builder, elem interface{})
 
-func builderPlus(str *strings.Builder, elem interface{}) {
-	switch val := elem.(type) {
-	case string:
-		str.WriteString(val)
-	default:
-		str.WriteString(fmt.Sprintf("%v", elem))
+func builderPlus() ConcatFilterFunc {
+	return func(str *strings.Builder, elem interface{}) {
+		switch val := elem.(type) {
+		case string:
+			str.WriteString(val)
+		default:
+			str.WriteString(fmt.Sprintf("%v", elem))
+		}
 	}
 }
-
-func (s Array) ToString(split string, c ...ConcatFilter) string {
+func (s Array) ToString(split string, c ...ConcatFilterFunc) string {
 	if len(s) <= 0 {
 		return ""
 	}
@@ -36,7 +37,7 @@ func (s Array) ToString(split string, c ...ConcatFilter) string {
 		if filted {
 			c[0](&str, s[k])
 		} else {
-			builderPlus(&str, s[k])
+			builderPlus()(&str, s[k])
 		}
 		if split != "" {
 			str.WriteString(split)

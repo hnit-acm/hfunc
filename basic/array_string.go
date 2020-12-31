@@ -10,7 +10,7 @@ func (s ArrayString) GetNative() []string {
 	return s
 }
 
-func (s ArrayString) ToString(split string, c ...ConcatFilter) (res string) {
+func (s ArrayString) ToString(split string, c ...ConcatFilterFunc) (res string) {
 	if len(s) <= 0 {
 		return ""
 	}
@@ -24,7 +24,7 @@ func (s ArrayString) ToString(split string, c ...ConcatFilter) (res string) {
 		if filted {
 			c[0](&str, s[k])
 		} else {
-			builderPlus(&str, s[k])
+			builderPlus()(&str, s[k])
 		}
 		if split != "" {
 			str.WriteString(split)
