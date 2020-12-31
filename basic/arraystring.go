@@ -6,18 +6,18 @@ import (
 
 type ArrayString []string
 
-func (s *ArrayString) GetNative() []string {
-	return *s
+func (s ArrayString) GetNative() []string {
+	return s
 }
 
-func (s *ArrayString) ToString(split string) (res string) {
-	if len(*s) <= 0 {
+func (s ArrayString) ToString(split string) (res string) {
+	if len(s) <= 0 {
 		return ""
 	}
 	var str strings.Builder
-	str.Grow(len(*s) * (2 + len(split)))
-	for k := range *s {
-		str.WriteString((*s)[k])
+	str.Grow(len(s) * (2 + len(split)))
+	for k := range s {
+		str.WriteString((s)[k])
 		if split != "" {
 			str.WriteString(split)
 		}

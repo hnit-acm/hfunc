@@ -2,13 +2,13 @@ package basic
 
 import "time"
 
-type TimeString string
+type TimeString String
 
-func (t *TimeString) GetNative() string {
-	return string(*t)
+func (t TimeString) GetNative() string {
+	return string(t)
 }
 
-func (t *TimeString) GetTime() (res *time.Time) {
+func (t TimeString) GetTime() (res *time.Time) {
 	res = t.ParseTime()
 	if res != nil {
 		return
@@ -34,7 +34,7 @@ func defaultDateFormatFunc() TimeFormatFunc {
 	}
 }
 
-func (t *TimeString) ParseTimeFormat(format TimeFormatFunc) (res *time.Time) {
+func (t TimeString) ParseTimeFormat(format TimeFormatFunc) (res *time.Time) {
 	ti, err := time.Parse(format(), t.GetNative())
 	if err != nil {
 		return nil
@@ -43,10 +43,10 @@ func (t *TimeString) ParseTimeFormat(format TimeFormatFunc) (res *time.Time) {
 	return
 }
 
-func (t *TimeString) ParseTime() (res *time.Time) {
+func (t TimeString) ParseTime() (res *time.Time) {
 	return t.ParseTimeFormat(defaultTimeFormatFunc())
 }
 
-func (t *TimeString) ParseDate() (res *time.Time) {
+func (t TimeString) ParseDate() (res *time.Time) {
 	return t.ParseTimeFormat(defaultDateFormatFunc())
 }
