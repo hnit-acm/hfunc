@@ -8,7 +8,7 @@ func (t TimeString) GetNative() string {
 	return string(t)
 }
 
-func (t TimeString) GetTime() (res *time.Time) {
+func (t TimeString) GetTime(funcs ...TimeFormatFunc) (res *time.Time) {
 	res = t.ParseTime()
 	if res != nil {
 		return
@@ -16,6 +16,12 @@ func (t TimeString) GetTime() (res *time.Time) {
 	res = t.ParseDate()
 	if res != nil {
 		return
+	}
+	for _, f := range funcs {
+		res = t.ParseTimeFormat(f)
+		if res != nil {
+			return
+		}
 	}
 	return
 }
