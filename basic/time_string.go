@@ -28,17 +28,17 @@ func (t TimeString) GetTime(funcs ...TimeFormatFunc) (res *time.Time) {
 
 type TimeFormatFunc func() string
 
-func defaultTimeFormatFunc() TimeFormatFunc {
-	return func() string {
+var defaultTimeFormatFunc = TimeFormatFunc(
+	func() string {
 		return "2006-01-02 15:04:05"
-	}
-}
+	},
+)
 
-func defaultDateFormatFunc() TimeFormatFunc {
-	return func() string {
+var defaultDateFormatFunc = TimeFormatFunc(
+	func() string {
 		return "2006-01-02"
-	}
-}
+	},
+)
 
 func (t TimeString) ParseTimeFormat(format TimeFormatFunc) (res *time.Time) {
 	ti, err := time.Parse(format(), t.GetNative())
@@ -50,9 +50,9 @@ func (t TimeString) ParseTimeFormat(format TimeFormatFunc) (res *time.Time) {
 }
 
 func (t TimeString) ParseTime() (res *time.Time) {
-	return t.ParseTimeFormat(defaultTimeFormatFunc())
+	return t.ParseTimeFormat(defaultTimeFormatFunc)
 }
 
 func (t TimeString) ParseDate() (res *time.Time) {
-	return t.ParseTimeFormat(defaultDateFormatFunc())
+	return t.ParseTimeFormat(defaultDateFormatFunc)
 }
