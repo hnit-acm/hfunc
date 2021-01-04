@@ -13,7 +13,11 @@ type SafeMap interface {
 	Delete(key interface{})
 }
 
-type HashFormatFunc func(key interface{}) []byte
+type HashFormatFunc func(key interface{}) uint32
+
+var defaultHashFormatFunc = HashFormatFunc(func(key interface{}) uint32 {
+	return crc32.ChecksumIEEE([]byte(key.(string)))
+})
 
 type ConcurrentHashMap struct {
 	data []map[interface{}]interface{}
@@ -28,7 +32,7 @@ type ConcurrentHashMap struct {
 	hashFormat HashFormatFunc
 }
 
-func NewConcurrentHashMap(bufSize uint32, hashFormat HashFormatFunc) *ConcurrentHashMap {
+func NewConcurrentHashMap(bufSize uint32, hashFormats ...HashFormatFunc) *ConcurrentHashMap {
 	// Allocate storage space for partition.
 	d := make([]map[interface{}]interface{}, bufSize)
 	// Allocate storage space for lock.
@@ -37,6 +41,12 @@ func NewConcurrentHashMap(bufSize uint32, hashFormat HashFormatFunc) *Concurrent
 	for i := uint32(0); i < bufSize; i++ {
 		d[i] = make(map[interface{}]interface{})
 		m[i] = sync.RWMutex{}
+	}
+	hashFormat := defaultHashFormatFunc
+
+	for _, format := range hashFormats {
+		hashFormat = format
+		continue
 	}
 
 	return &ConcurrentHashMap{
@@ -48,21 +58,21 @@ func NewConcurrentHashMap(bufSize uint32, hashFormat HashFormatFunc) *Concurrent
 }
 
 func (m *ConcurrentHashMap) Set(key, val interface{}) {
-	hashVal := crc32.ChecksumIEEE(m.hashFormat(key)) % m.size
+	hashVal := m.hashFormat(key) % m.size
 	m.mus[hashVal].Lock()
 	m.data[hashVal][key] = val
 	m.mus[hashVal].Unlock()
 }
 
 func (m *ConcurrentHashMap) Delete(key interface{}) {
-	hashVal := crc32.ChecksumIEEE(m.hashFormat(key)) % m.size
+	hashVal := m.hashFormat(key) % m.size
 	m.mus[hashVal].Lock()
 	delete(m.data[hashVal], key)
 	m.mus[hashVal].Unlock()
 }
 
 func (m *ConcurrentHashMap) Get(key interface{}) (interface{}, bool) {
-	hashVal := crc32.ChecksumIEEE(m.hashFormat(key)) % m.size
+	hashVal := m.hashFormat(key) % m.size
 	m.mus[hashVal].RLock()
 	data, ok := m.data[hashVal][key]
 	m.mus[hashVal].RUnlock()
