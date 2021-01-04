@@ -15,24 +15,24 @@ type CacheFunc func() (basic.GetFunc, basic.SetFunc)
 // DefaultGetFieldsArray 默认方法
 var DefaultGetFieldsArray, DefaultGetFieldsString = NewGetFields(
 	func() (basic.StringFormatFunc, CacheFunc, LayerSplitFunc) {
-		layerSplitFunc := LayerSplitFunc(func() string {
+		LayerSplitFunc := LayerSplitFunc(func() string {
 			return ","
 		})
 
-		cacheFunc := CacheFunc(func() (basic.GetFunc, basic.SetFunc) {
+		CacheFunc := CacheFunc(func() (basic.GetFunc, basic.SetFunc) {
 			get, set, _ := basic.NewHashMapFunc(1024)
 			return get, set
 		})
 
 		return basic.SnakeCasedStringFormat,
-			cacheFunc,
-			layerSplitFunc
+			CacheFunc,
+			LayerSplitFunc
 	},
 )
 
-type GetFieldsArray func(p interface{}, cacheNo string) basic.ArrayString
+type GetFieldsArrayFunc func(p interface{}, cacheNo string) basic.ArrayString
 
-type GetFieldsString func(p interface{}, splitChar, cacheNo string) string
+type GetFieldsStringFunc func(p interface{}, splitChar, cacheNo string) string
 
 // NewGetFields 新建域获取func
 //参数：
@@ -50,10 +50,10 @@ type GetFieldsString func(p interface{}, splitChar, cacheNo string) string
 //
 //
 
-func NewGetFields(structFormatter StructFormatter) (GetFieldsArray, GetFieldsString) {
+func NewGetFields(structFormatter StructFormatter) (GetFieldsArrayFunc, GetFieldsStringFunc) {
 	format, cache, split := structFormatter()
 	get, set := cache()
-	GetFieldsArrayFunc := func(p interface{}, cacheNo string) basic.ArrayString {
+	GetFieldsArrayFunc := GetFieldsArrayFunc(func(p interface{}, cacheNo string) basic.ArrayString {
 		t := reflect.ValueOf(p).Elem()
 		path := cacheNo + t.Type().PkgPath() + "." + t.Type().String()
 		//key := crc32.ChecksumIEEE([]byte(path))
@@ -93,8 +93,8 @@ func NewGetFields(structFormatter StructFormatter) (GetFieldsArray, GetFieldsStr
 		}
 		set(path, all)
 		return all
-	}
-	GetFieldsStringFunc := func(p interface{}, splitChar string, cacheNo string) string {
+	})
+	GetFieldsStringFunc := GetFieldsStringFunc(func(p interface{}, splitChar string, cacheNo string) string {
 		t := reflect.ValueOf(p).Elem()
 		pathStr := cacheNo + t.Type().PkgPath() + "." + t.Type().String() + "-string-" + splitChar
 		// look up string cache.
@@ -120,7 +120,7 @@ func NewGetFields(structFormatter StructFormatter) (GetFieldsArray, GetFieldsStr
 		// store cache
 		set(pathStr, all)
 		return all
-	}
+	})
 	return GetFieldsArrayFunc, GetFieldsStringFunc
 
 }
@@ -170,7 +170,7 @@ var DefaultStructToMap = NewStructToMap(
 	},
 )
 
-type Filter func(v interface{}) bool
+type FilterFunc func(v interface{}) bool
 
 //参数:
 //	p: 用于生成的结构体
@@ -199,9 +199,9 @@ type Filter func(v interface{}) bool
 //  使用过滤器可以使用不定参数
 //	使用and生成的Sql为，where first_name like ? and last_name = ? and create_time > ? and create_time < ?
 //
-func NewStructToMap(structFormatter StructFormatter) func(p interface{}, zeroFilter ...Filter) []map[string]interface{} {
+func NewStructToMap(structFormatter StructFormatter) func(p interface{}, zeroFilter ...FilterFunc) []map[string]interface{} {
 	format, _, _ := structFormatter()
-	return func(p interface{}, zeroFilter ...Filter) (all []map[string]interface{}) {
+	return func(p interface{}, zeroFilter ...FilterFunc) (all []map[string]interface{}) {
 		e := reflect.ValueOf(p)
 		t := e.Type()
 		all = make([]map[string]interface{}, 0)
