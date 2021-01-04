@@ -5,13 +5,11 @@ import (
 	"sync"
 )
 
-type SafeMap interface {
-	Set(key, val interface{})
-	Get(key interface{}) (interface{}, bool)
-	GetByCondition(f func(key, val interface{}) bool) (interface{}, bool)
-	ForEach(f func(key, val interface{}))
-	Delete(key interface{})
-}
+// 函数式map
+
+type SetFunc func(key, val interface{})
+type GetFunc func(key interface{}) (interface{}, bool)
+type DelFunc func(key interface{})
 
 type HashFormatFunc func(key interface{}) uint32
 
@@ -19,81 +17,110 @@ var defaultHashFormatFunc = HashFormatFunc(func(key interface{}) uint32 {
 	return crc32.ChecksumIEEE([]byte(key.(string)))
 })
 
-type ConcurrentHashMap struct {
-	data []map[interface{}]interface{}
-	mus  []sync.RWMutex
-	// Partition size
-	size uint32
-	// Hash format function.
-	// Example: from int to []byte].
-	// func(key interface{}) []byte {
-	//		return []byte(strings.Itoa(key))
-	// }
-	hashFormat HashFormatFunc
-}
+type HashMap []map[interface{}]interface{}
 
-func NewConcurrentHashMap(bufSize uint32, hashFormats ...HashFormatFunc) *ConcurrentHashMap {
-	// Allocate storage space for partition.
-	d := make([]map[interface{}]interface{}, bufSize)
-	// Allocate storage space for lock.
-	m := make([]sync.RWMutex, bufSize)
-	// Generate instance for partition and lock.
-	for i := uint32(0); i < bufSize; i++ {
-		d[i] = make(map[interface{}]interface{})
-		m[i] = sync.RWMutex{}
-	}
-	hashFormat := defaultHashFormatFunc
+type MapFunc func(bufSize uint32, hashFormats ...HashFormatFunc) (GetFunc, SetFunc, DelFunc)
 
-	for _, format := range hashFormats {
-		hashFormat = format
-		continue
-	}
-
-	return &ConcurrentHashMap{
-		size:       bufSize,
-		data:       d,
-		mus:        m,
-		hashFormat: hashFormat,
-	}
-}
-
-func (m *ConcurrentHashMap) Set(key, val interface{}) {
-	hashVal := m.hashFormat(key) % m.size
-	m.mus[hashVal].Lock()
-	m.data[hashVal][key] = val
-	m.mus[hashVal].Unlock()
-}
-
-func (m *ConcurrentHashMap) Delete(key interface{}) {
-	hashVal := m.hashFormat(key) % m.size
-	m.mus[hashVal].Lock()
-	delete(m.data[hashVal], key)
-	m.mus[hashVal].Unlock()
-}
-
-func (m *ConcurrentHashMap) Get(key interface{}) (interface{}, bool) {
-	hashVal := m.hashFormat(key) % m.size
-	m.mus[hashVal].RLock()
-	data, ok := m.data[hashVal][key]
-	m.mus[hashVal].RUnlock()
-	return data, ok
-}
-
-func (m *ConcurrentHashMap) GetByCondition(f func(key, value interface{}) bool) (interface{}, bool) {
-	for i := uint32(0); i < m.size; i++ {
-		for k, v := range m.data[i] {
-			if f(k, v) == true {
-				return v, true
+var NewHashMapFunc = MapFunc(
+	func(bufSize uint32, hashFormats ...HashFormatFunc) (GetFunc, SetFunc, DelFunc) {
+		var (
+			data       HashMap
+			mus        []sync.RWMutex
+			hashFormat HashFormatFunc
+		)
+		data = make(HashMap, bufSize)
+		mus = make([]sync.RWMutex, bufSize)
+		hashFormat = defaultHashFormatFunc
+		for _, format := range hashFormats {
+			hashFormat = format
+			break
+		}
+		get := GetFunc(func(key interface{}) (interface{}, bool) {
+			hashVal := hashFormat(key) % bufSize
+			mus[hashVal].RLock()
+			data, ok := data[hashVal][key]
+			mus[hashVal].RUnlock()
+			return data, ok
+		})
+		set := SetFunc(func(key, val interface{}) {
+			hashVal := hashFormat(key) % bufSize
+			mus[hashVal].Lock()
+			if data[hashVal] == nil {
+				data[hashVal] = make(map[interface{}]interface{})
 			}
-		}
-	}
-	return nil, false
+			data[hashVal][key] = val
+			mus[hashVal].Unlock()
+		})
+		del := DelFunc(func(key interface{}) {
+			hashVal := hashFormat(key) % bufSize
+			mus[hashVal].Lock()
+			delete(data[hashVal], key)
+			mus[hashVal].Unlock()
+		})
+		return get, set, del
+	},
+)
+
+// 面向对象式map
+
+type Map interface {
+	Set() SetFunc
+	Get() GetFunc
+	Del() DelFunc
 }
 
-func (m *ConcurrentHashMap) ForEach(f func(key, value interface{})) {
-	for i := uint32(0); i < m.size; i++ {
-		for k, v := range m.data[i] {
-			f(k, v)
-		}
+type MapStruct struct {
+	set SetFunc
+	get GetFunc
+	del DelFunc
+}
+
+func NewHashMapStruct(bufSize uint32, hashFormats ...HashFormatFunc) Map {
+	get, set, del := NewHashMapFunc(bufSize, hashFormats...)
+	return MapStruct{
+		set: set,
+		get: get,
+		del: del,
+	}
+}
+
+func (m MapStruct) Set() SetFunc {
+	return m.set
+}
+
+func (m MapStruct) Get() GetFunc {
+	return m.get
+}
+
+func (m MapStruct) Del() DelFunc {
+	return m.del
+}
+
+var NewSyncMapFunc = MapFunc(
+	func(bufSize uint32, hashFormats ...HashFormatFunc) (GetFunc, SetFunc, DelFunc) {
+		var (
+			data sync.Map
+		)
+		data = sync.Map{}
+
+		get := GetFunc(func(key interface{}) (interface{}, bool) {
+			return data.Load(key)
+		})
+		set := SetFunc(func(key, val interface{}) {
+			data.Store(key, val)
+		})
+		del := DelFunc(func(key interface{}) {
+			data.Delete(key)
+		})
+		return get, set, del
+	},
+)
+
+func NewSyncMapStruct(bufSize uint32, hashFormats ...HashFormatFunc) Map {
+	get, set, del := NewSyncMapFunc(bufSize, hashFormats...)
+	return MapStruct{
+		set: set,
+		get: get,
+		del: del,
 	}
 }

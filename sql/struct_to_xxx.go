@@ -10,21 +10,19 @@ type StructFormatter func() (basic.StringFormatFunc, CacheFunc, LayerSplitFunc)
 
 type LayerSplitFunc func() string
 
-type CacheFunc func() (Get, Set)
-type Get func(key interface{}) (interface{}, bool)
-type Set func(key interface{}, val interface{})
+type CacheFunc func() (basic.GetFunc, basic.SetFunc)
 
 // DefaultGetFieldsArray 默认方法
 var DefaultGetFieldsArray, DefaultGetFieldsString = NewGetFields(
 	func() (basic.StringFormatFunc, CacheFunc, LayerSplitFunc) {
-		layerSplitFunc := func() string {
+		layerSplitFunc := LayerSplitFunc(func() string {
 			return ","
-		}
+		})
 
-		cacheFunc := func() (Get, Set) {
-			mapp := basic.NewConcurrentHashMap(1024)
-			return mapp.Get, mapp.Set
-		}
+		cacheFunc := CacheFunc(func() (basic.GetFunc, basic.SetFunc) {
+			get, set, _ := basic.NewHashMapFunc(1024)
+			return get, set
+		})
 
 		return basic.SnakeCasedStringFormat,
 			cacheFunc,
