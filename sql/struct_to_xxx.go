@@ -3,61 +3,36 @@ package sql
 import (
 	"github.com/hnit-acm/go-common/basic"
 	"reflect"
-	"sync"
 	"time"
 )
 
-// StructFormatter 格式化结构
-type StructFormatter interface {
-	// 域字符串处理
-	StrFormatHandle(str string) string
-	// 嵌套层次结构体处理符
-	LayerFormatHandle() string
-	// 域切片缓存
-	Cache() func() FormatterCache
-}
+type StructFormatter func() (basic.StringFormatFunc, CacheFunc, LayerSplitFunc)
 
-// 格式化器缓存结构
-type FormatterCache interface {
-	Get(key interface{}) (interface{}, bool)
-	Set(key interface{}, val interface{})
-}
+type LayerSplitFunc func() string
+
+type CacheFunc func() (Get, Set)
+type Get func(key interface{}) (interface{}, bool)
+type Set func(key interface{}, val interface{})
 
 // DefaultGetFieldsArray 默认方法
-var DefaultGetFieldsArray, DefaultGetFieldsString = NewGetFields(&defaultFormatter{})
+var DefaultGetFieldsArray, DefaultGetFieldsString = NewGetFields(
+	func() (basic.StringFormatFunc, CacheFunc, LayerSplitFunc) {
+		layerSplitFunc := func() string {
+			return ","
+		}
 
-// defaultFormatter 默认结构体格式化器实现
-type defaultFormatter struct {
-}
+		cacheFunc := func() (Get, Set) {
+			mapp := basic.NewConcurrentHashMap(1024, func(key interface{}) []byte {
+				return []byte(key.(string))
+			})
+			return mapp.Get, mapp.Set
+		}
 
-func (d *defaultFormatter) StrFormatHandle(str string) string {
-	return basic.String(str).SnakeCasedString()
-}
-
-func (d *defaultFormatter) LayerFormatHandle() string {
-	return "."
-}
-
-// defaultCache 默认缓存实现
-type defaultCache struct {
-	sync.Map
-}
-
-func (d *defaultCache) Get(key interface{}) (interface{}, bool) {
-	return d.Map.Load(key)
-}
-
-func (d *defaultCache) Set(key interface{}, val interface{}) {
-	d.Map.Store(key, val)
-}
-
-// Cache 闭包加入缓存
-func (d *defaultFormatter) Cache() func() FormatterCache {
-	cache := &defaultCache{}
-	return func() FormatterCache {
-		return cache
-	}
-}
+		return basic.SnakeCasedStringFormat,
+			cacheFunc,
+			layerSplitFunc
+	},
+)
 
 type GetFieldsArray func(p interface{}, cacheNo string) basic.ArrayString
 
@@ -79,13 +54,14 @@ type GetFieldsString func(p interface{}, splitChar, cacheNo string) string
 //
 //
 
-func NewGetFields(format StructFormatter) (GetFieldsArray, GetFieldsString) {
-	cache := format.Cache()()
+func NewGetFields(structFormatter StructFormatter) (GetFieldsArray, GetFieldsString) {
+	format, cache, split := structFormatter()
+	get, set := cache()
 	GetFieldsArrayFunc := func(p interface{}, cacheNo string) basic.ArrayString {
 		t := reflect.ValueOf(p).Elem()
 		path := cacheNo + t.Type().PkgPath() + "." + t.Type().String()
 		//key := crc32.ChecksumIEEE([]byte(path))
-		if val, ok := cache.Get(path); ok {
+		if val, ok := get(path); ok {
 			return val.(basic.ArrayString)
 		}
 		all := make(basic.ArrayString, 0)
@@ -104,7 +80,7 @@ func NewGetFields(format StructFormatter) (GetFieldsArray, GetFieldsString) {
 			}
 			// if is struct
 			if tf.Kind() == reflect.Struct && t == 0 {
-				all = layerHandle(tf, all, format.StrFormatHandle(tt.Name), format)
+				all = layerHandle(tf, all, format(tt.Name), format, split)
 				continue
 			}
 			name := tt.Name
@@ -114,30 +90,30 @@ func NewGetFields(format StructFormatter) (GetFieldsArray, GetFieldsString) {
 			}
 			// alias tag
 			if val, ok := tt.Tag.Lookup("alias"); ok {
-				all = append(all, format.StrFormatHandle(name)+" as "+val)
+				all = append(all, format(name)+" as "+val)
 				continue
 			}
-			all = append(all, format.StrFormatHandle(name))
+			all = append(all, format(name))
 		}
-		cache.Set(path, all)
+		set(path, all)
 		return all
 	}
 	GetFieldsStringFunc := func(p interface{}, splitChar string, cacheNo string) string {
 		t := reflect.ValueOf(p).Elem()
 		pathStr := cacheNo + t.Type().PkgPath() + "." + t.Type().String() + "-string-" + splitChar
 		// look up string cache.
-		val, ok := cache.Get(pathStr)
+		val, ok := get(pathStr)
 		if ok {
 			return val.(string)
 		}
 		// look up struct cache.
 		pathStruct := cacheNo + t.Type().PkgPath() + "." + t.Type().String()
-		val, ok = cache.Get(pathStruct)
+		val, ok = get(pathStruct)
 		if ok {
 			array := val.(basic.ArrayString)
 			all := array.ToString(splitChar)
 			//all := ArrayStringToStringBuilder(val.([]string), splitChar)
-			cache.Set(pathStr, all)
+			set(pathStr, all)
 			return all
 		}
 		// no cache.
@@ -146,14 +122,14 @@ func NewGetFields(format StructFormatter) (GetFieldsArray, GetFieldsString) {
 
 		//all := ArrayStringToStringBuilder(array, splitChar)
 		// store cache
-		cache.Set(pathStr, all)
+		set(pathStr, all)
 		return all
 	}
 	return GetFieldsArrayFunc, GetFieldsStringFunc
 
 }
 
-func layerHandle(t reflect.Value, all []string, prefix string, format StructFormatter) []string {
+func layerHandle(t reflect.Value, all []string, prefix string, format basic.StringFormatFunc, split LayerSplitFunc) []string {
 	num := t.NumField()
 	for i := 0; i < num; i++ {
 		tf := t.Field(i)
@@ -165,7 +141,7 @@ func layerHandle(t reflect.Value, all []string, prefix string, format StructForm
 			t = 1
 		}
 		if tf.Kind() == reflect.Struct && t == 0 {
-			all = layerHandle(tf, all, prefix+format.LayerFormatHandle()+format.StrFormatHandle(tt.Name), format)
+			all = layerHandle(tf, all, prefix+split()+format(tt.Name), format, split)
 
 			continue
 		}
@@ -176,23 +152,27 @@ func layerHandle(t reflect.Value, all []string, prefix string, format StructForm
 			name = val
 			// 别名tag
 			if val, ok := tt.Tag.Lookup("alias"); ok {
-				all = append(all, format.StrFormatHandle(name)+" as "+val)
+				all = append(all, format(name)+" as "+val)
 				continue
 			}
-			all = append(all, format.StrFormatHandle(name))
+			all = append(all, format(name))
 			continue
 		}
 		// 别名tag
 		if val, ok := tt.Tag.Lookup("alias"); ok {
-			all = append(all, prefix+format.LayerFormatHandle()+format.StrFormatHandle(name)+" as "+val)
+			all = append(all, prefix+split()+format(name)+" as "+val)
 			continue
 		}
-		all = append(all, prefix+format.LayerFormatHandle()+format.StrFormatHandle(name))
+		all = append(all, prefix+split()+format(name))
 	}
 	return all
 }
 
-var DefaultStructToMap = NewStructToMap(&defaultFormatter{})
+var DefaultStructToMap = NewStructToMap(
+	func() (basic.StringFormatFunc, CacheFunc, LayerSplitFunc) {
+		return basic.SnakeCasedStringFormat, nil, nil
+	},
+)
 
 type Filter func(v interface{}) bool
 
@@ -223,7 +203,8 @@ type Filter func(v interface{}) bool
 //  使用过滤器可以使用不定参数
 //	使用and生成的Sql为，where first_name like ? and last_name = ? and create_time > ? and create_time < ?
 //
-func NewStructToMap(format StructFormatter) func(p interface{}, zeroFilter ...Filter) []map[string]interface{} {
+func NewStructToMap(structFormatter StructFormatter) func(p interface{}, zeroFilter ...Filter) []map[string]interface{} {
+	format, _, _ := structFormatter()
 	return func(p interface{}, zeroFilter ...Filter) (all []map[string]interface{}) {
 		e := reflect.ValueOf(p)
 		t := e.Type()
@@ -238,7 +219,7 @@ func NewStructToMap(format StructFormatter) func(p interface{}, zeroFilter ...Fi
 				}
 			}
 			op := "="
-			name := format.StrFormatHandle(t.Field(i).Name)
+			name := format(t.Field(i).Name)
 			if val, ok := t.Field(i).Tag.Lookup("op"); ok && val != "" {
 				//key = format.StrFormatHandle(t.Field(i).Name) + " " + val + " ? "
 				op = val
