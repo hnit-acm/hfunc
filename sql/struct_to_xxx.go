@@ -22,9 +22,7 @@ var DefaultGetFieldsArray, DefaultGetFieldsString = NewGetFields(
 		}
 
 		cacheFunc := func() (Get, Set) {
-			mapp := basic.NewConcurrentHashMap(1024, func(key interface{}) []byte {
-				return []byte(key.(string))
-			})
+			mapp := basic.NewConcurrentHashMap(1024)
 			return mapp.Get, mapp.Set
 		}
 
