@@ -8,7 +8,35 @@ func (t TimeString) GetNative() string {
 	return string(t)
 }
 
-func (t TimeString) GetTime(funcs ...TimeFormatFunc) (res *time.Time) {
+func (t TimeString) GetFunc() TimeStringFunc {
+	return func() string {
+		return t.GetNative()
+	}
+}
+
+type TimeStringFunc func() string
+
+func (s TimeStringFunc) GetNative() string {
+	return s()
+}
+
+func (t TimeStringFunc) TimeFormatFunc(funcs TimeFormatFunc, layout string) (res *time.Time) {
+	return funcs(t(), layout)
+}
+
+func (t TimeStringFunc) ParseTimeFormat(layout string) (res *time.Time) {
+	return t.TimeFormatFunc(TimeFormat, layout)
+}
+
+func (t TimeStringFunc) TryGetTime(funcs TimeFormatFunc, layouts ...string) (res *time.Time) {
+	if funcs != nil {
+		for _, layout := range layouts {
+			res = t.TimeFormatFunc(funcs, layout)
+			if res != nil {
+				return
+			}
+		}
+	}
 	res = t.ParseTime()
 	if res != nil {
 		return
@@ -17,42 +45,33 @@ func (t TimeString) GetTime(funcs ...TimeFormatFunc) (res *time.Time) {
 	if res != nil {
 		return
 	}
-	for _, f := range funcs {
-		res = t.ParseTimeFormat(f)
-		if res != nil {
-			return
+	return
+}
+
+type TimeFormatFunc func(timeStr, layout string) *time.Time
+
+var TimeFormat = TimeFormatFunc(
+	func(timeStr, layout string) *time.Time {
+		ti, err := time.Parse(layout, timeStr)
+		if err != nil {
+			return nil
 		}
-	}
-	return
-}
-
-type TimeFormatFunc func() string
-
-var defaultTimeFormatFunc = TimeFormatFunc(
-	func() string {
-		return "2006-01-02 15:04:05"
+		return &ti
 	},
 )
 
-var defaultDateFormatFunc = TimeFormatFunc(
-	func() string {
-		return "2006-01-02"
-	},
-)
-
-func (t TimeString) ParseTimeFormat(format TimeFormatFunc) (res *time.Time) {
-	ti, err := time.Parse(format(), t.GetNative())
-	if err != nil {
-		return nil
-	}
-	res = &ti
-	return
+var timeLayout = func() string {
+	return "2006-01-02"
 }
 
-func (t TimeString) ParseTime() (res *time.Time) {
-	return t.ParseTimeFormat(defaultTimeFormatFunc)
+var dateLayout = func() string {
+	return "2006-01-02"
 }
 
-func (t TimeString) ParseDate() (res *time.Time) {
-	return t.ParseTimeFormat(defaultDateFormatFunc)
+func (t TimeStringFunc) ParseTime() (res *time.Time) {
+	return t.ParseTimeFormat(timeLayout())
+}
+
+func (t TimeStringFunc) ParseDate() (res *time.Time) {
+	return t.ParseTimeFormat(dateLayout())
 }

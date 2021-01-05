@@ -3,9 +3,9 @@ package utils
 import "github.com/hnit-acm/go-common/basic"
 
 func ArrayToString(p []interface{}, split string, funcs ...basic.ConcatFilterFunc) string {
-	return basic.Array(p).ToString(split, funcs...)
+	return basic.Array(p).GetFunc().ToString(split, funcs...)
 }
 
 func ArrayStringToString(p []string, split string, funcs ...basic.ConcatFilterFunc) string {
-	return basic.ArrayString(p).ToString(split, funcs...)
+	return basic.ArrayString(p).GetFunc().ToString(split, funcs...)
 }

@@ -107,14 +107,14 @@ func NewGetFields(structFormatter StructFormatter) (GetFieldsArrayFunc, GetField
 		val, ok = get(pathStruct)
 		if ok {
 			array := val.(basic.ArrayString)
-			all := array.ToString(splitChar)
+			all := array.GetFunc().ToString(splitChar)
 			//all := ArrayStringToStringBuilder(val.([]string), splitChar)
 			set(pathStr, all)
 			return all
 		}
 		// no cache.
 		array := GetFieldsArrayFunc(p, cacheNo)
-		all := array.ToString(splitChar)
+		all := array.GetFunc().ToString(splitChar)
 
 		//all := ArrayStringToStringBuilder(array, splitChar)
 		// store cache
