@@ -12,6 +12,18 @@ func (s String) GetNative() string {
 	return string(s)
 }
 
+func (s String) GetFunc() StringFunc {
+	return func() string {
+		return s.GetNative()
+	}
+}
+
+type StringFunc func() string
+
+func (s StringFunc) GetNative() string {
+	return s()
+}
+
 type StringFormatFunc func(string) string
 
 var SnakeCasedStringFormat = StringFormatFunc(func(s string) string {
@@ -40,18 +52,26 @@ var StringEncode = StringEncodeFunc(
 	},
 )
 
-func (s String) SnakeCasedString() string {
-	return SnakeCasedStringFormat(string(s))
+func (s StringFunc) Format(f StringFormatFunc) string {
+	return f(s())
 }
 
-func (s String) Md5(sum ...string) string {
-	return s.Encode(md5.New(), sum...)
+func (s StringFunc) SnakeCasedString() string {
+	return s.Format(SnakeCasedStringFormat)
 }
 
-func (s String) Sha256(sum ...string) string {
-	return s.Encode(sha256.New(), sum...)
+func (s StringFunc) StringEncodeFunc(f StringEncodeFunc, hash hash.Hash, sum ...string) string {
+	return f(s(), hash, sum...)
 }
 
-func (s String) Encode(hash hash.Hash, sum ...string) string {
-	return StringEncode(string(s), hash, sum...)
+func (s StringFunc) StringEncode(hash hash.Hash, sum ...string) string {
+	return s.StringEncodeFunc(StringEncode, hash, sum...)
+}
+
+func (s StringFunc) Md5(sum ...string) string {
+	return s.StringEncode(md5.New(), sum...)
+}
+
+func (s StringFunc) Sha256(sum ...string) string {
+	return s.StringEncode(sha256.New(), sum...)
 }

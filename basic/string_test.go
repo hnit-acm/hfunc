@@ -12,7 +12,7 @@ func TestString_SnakeCasedString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.s.SnakeCasedString(); got != tt.want {
+			if got := tt.s.GetFunc().SnakeCasedString(); got != tt.want {
 				t.Errorf("SnakeCasedString() = %v, want %v", got, tt.want)
 			}
 		})
@@ -35,6 +35,6 @@ func TestString_SnakeCasedString(t *testing.T) {
 func BenchmarkString_SnakeCasedString(b *testing.B) {
 	s := "AdasDaDSadADS"
 	for i := 0; i < b.N; i++ {
-		String(s).SnakeCasedString()
+		String(s).GetFunc().SnakeCasedString()
 	}
 }

@@ -9,23 +9,36 @@ type ArrayString []string
 func (s ArrayString) GetNative() []string {
 	return s
 }
+func (s ArrayString) GetFunc() ArrayStringFunc {
+	return func() []string {
+		return s.GetNative()
+	}
+}
 
-func (s ArrayString) ToString(split string, c ...ConcatFilterFunc) (res string) {
-	if len(s) <= 0 {
+type ArrayStringFunc func() []string
+
+func (s ArrayStringFunc) GetNative() []string {
+	return s()
+}
+
+func (s ArrayStringFunc) ToString(split string, c ...ConcatFilterFunc) (res string) {
+	if len(s()) <= 0 {
 		return ""
 	}
-	filted := false
-	if len(c) > 0 {
-		filted = true
-	}
 	var str strings.Builder
-	str.Grow(len(s) * (2 + len(split)))
-	for k := range s {
-		if filted {
-			c[0](&str, s[k])
-		} else {
-			builderPlus()(&str, s[k])
+	str.Grow(len(s()) * (2 + len(split)))
+for1:
+	for k := range s() {
+		for _, filterFunc := range c {
+			ok := filterFunc(&str, s()[k])
+			if ok {
+				if split != "" {
+					str.WriteString(split)
+				}
+				continue for1
+			}
 		}
+		builderPlus()(&str, s()[k])
 		if split != "" {
 			str.WriteString(split)
 		}

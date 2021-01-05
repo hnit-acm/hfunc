@@ -42,16 +42,17 @@ func TestStringArray_ToString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotRes := tt.s.ToString(tt.args.split); gotRes != tt.wantRes {
+			if gotRes := tt.s.GetFunc().ToString(tt.args.split); gotRes != tt.wantRes {
 				t.Errorf("ToString() = %v, want %v", gotRes, tt.wantRes)
 			}
 		})
 	}
 }
 
+//BenchmarkStringArray_ToString-8   	 5123467	       224 ns/op
 func BenchmarkStringArray_ToString(b *testing.B) {
 	t := ArrayString{"a", "b", "c"}
 	for i := 0; i < b.N; i++ {
-		t.ToString("")
+		t.GetFunc().ToString("")
 	}
 }
