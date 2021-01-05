@@ -61,7 +61,10 @@ func (s StringFunc) SnakeCasedString() string {
 }
 
 func (s StringFunc) StringEncodeFunc(f StringEncodeFunc, hash hash.Hash, sum ...string) string {
-	return f(s(), hash, sum...)
+	if f != nil {
+		return f(s(), hash, sum...)
+	}
+	return ""
 }
 
 func (s StringFunc) StringEncode(hash hash.Hash, sum ...string) string {

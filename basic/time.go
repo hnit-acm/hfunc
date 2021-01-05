@@ -31,7 +31,10 @@ func (t TimeFunc) FormatString(layout string) string {
 }
 
 func (t TimeFunc) TimeFormatStringFunc(funcs TimeFormatStringFunc, layout string) string {
-	return funcs(t(), layout)
+	if funcs != nil {
+		return funcs(t(), layout)
+	}
+	return ""
 }
 
 func (t TimeFunc) TryFormat(funcs TimeFormatStringFunc, layouts ...string) string {
@@ -41,6 +44,13 @@ func (t TimeFunc) TryFormat(funcs TimeFormatStringFunc, layouts ...string) strin
 			if res != "" {
 				return res
 			}
+		}
+	}
+
+	for _, layout := range layouts {
+		res := t.TimeFormatStringFunc(TimeFormatString, layout)
+		if res != "" {
+			return res
 		}
 	}
 

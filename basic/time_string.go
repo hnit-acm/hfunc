@@ -21,7 +21,10 @@ func (s TimeStringFunc) GetNative() string {
 }
 
 func (t TimeStringFunc) TimeFormatFunc(funcs TimeFormatFunc, layout string) (res *time.Time) {
-	return funcs(t(), layout)
+	if funcs != nil {
+		return funcs(t(), layout)
+	}
+	return nil
 }
 
 func (t TimeStringFunc) ParseTimeFormat(layout string) (res *time.Time) {
@@ -37,6 +40,14 @@ func (t TimeStringFunc) TryGetTime(funcs TimeFormatFunc, layouts ...string) (res
 			}
 		}
 	}
+
+	for _, layout := range layouts {
+		res = t.TimeFormatFunc(TimeFormat, layout)
+		if res != nil {
+			return
+		}
+	}
+
 	res = t.ParseTime()
 	if res != nil {
 		return
