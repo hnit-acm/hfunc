@@ -11,7 +11,7 @@ jobs:
   history:
     name: Pull Request Body
     runs-on: ubuntu-latest
-    if: startsWith(github.event.pull_request.head.ref, 'main/')
+    if: startsWith(github.event.pull_request.head.ref, 'main')
     steps:
       - name: Pull Request Body
         uses: technote-space/pr-commit-body-action@v1
