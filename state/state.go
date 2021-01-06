@@ -4,6 +4,9 @@ import (
 	"github.com/hnit-acm/go-common/basic"
 )
 
+// todo 完善状态机逻辑
+// labels: enhancement
+// assignees: nieaowei
 type EventMap map[StateKey]func(key StateKey) StateFunc
 
 // 状态key

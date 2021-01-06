@@ -16,3 +16,5 @@ jobs:
         id: "todo"
         with:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_MARKER: "//"
+          LABEL: "// todo"
