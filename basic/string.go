@@ -33,7 +33,7 @@ var SnakeCasedStringFormat = StringFormatFunc(func(s string) string {
 			if idx > 0 {
 				newstr = append(newstr, '_')
 			}
-			chr -= ('A' - 'a')
+			chr -= 'A' - 'a'
 		}
 		newstr = append(newstr, chr)
 	}
