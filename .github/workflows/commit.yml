@@ -1,0 +1,17 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Pull Request updated
+# Controls when the action will run. 
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+
+jobs:
+  history:
+    name: Pull Request Body
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.pull_request.head.ref, 'main/')
+    steps:
+      - name: Pull Request Body
+        uses: technote-space/pr-commit-body-action@v1
