@@ -1,55 +1,59 @@
 package basic
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 )
 
-type UInteger64 uint64
+type Uint64 uint64
 
-func (i UInteger64) GetNative() uint64 {
+
+func (i Uint64) GetNative() uint64 {
 	return uint64(i)
 }
 
-func (i UInteger64) GetFunc() UInteger64Func {
+func (i Uint64) GetFunc() Uint64Func {
 	return func() uint64 {
 		return i.GetNative()
 	}
 }
 
-type UInteger64Func func() uint64
+type Uint64Func func() uint64
 
-func (g UInteger64Func) GetNative() uint64 {
+func (g Uint64Func) GetNative() uint64 {
 	return g()
 }
 
-func (g UInteger64Func) ToString(f UInteger64ToStringFunc) string {
-	return f(g())
+func (g Uint64Func) ToString(f Uint64ToStringFunc) string {
+	if f != nil {
+		return f(g())
+	}
+	return g.ToNativeString()
 }
-func (g UInteger64Func) ToNativeString() string {
-	return g.ToString(UInteger64ToNativeString)
+func (g Uint64Func) ToNativeString() string {
+	return g.ToString(Uint64ToNativeString)
 }
-func (g UInteger64Func) ToBinaryString() string {
-	return g.ToString(UInteger64ToHexString)
+func (g Uint64Func) ToBinaryString() string {
+	return g.ToString(Uint64ToHexString)
 }
 
-func (g UInteger64Func) ToHexStringLower() string {
-	return g.ToString(UInteger64ToBinaryString)
+func (g Uint64Func) ToHexStringLower() string {
+	return g.ToString(Uint64ToBinaryString)
 }
 
-func (g UInteger64Func) ToHexStringUpper() string {
+func (g Uint64Func) ToHexStringUpper() string {
 	return strings.ToUpper(g.ToHexStringLower())
 }
 
-type UInteger64ToStringFunc func(n uint64) string
+type Uint64ToStringFunc func(n uint64) string
 
-var UInteger64ToNativeString = UInteger64ToStringFunc(func(n uint64) string {
-	return fmt.Sprintf("%d", n)
+var Uint64ToNativeString = Uint64ToStringFunc(func(n uint64) string {
+	return strconv.FormatUint(n, 10)
 })
-var UInteger64ToBinaryString = UInteger64ToStringFunc(func(n uint64) string {
-	return fmt.Sprintf("%b", n)
+var Uint64ToBinaryString = Uint64ToStringFunc(func(n uint64) string {
+	return strconv.FormatUint(n, 2)
 })
 
-var UInteger64ToHexString = UInteger64ToStringFunc(func(n uint64) string {
-	return fmt.Sprintf("%x", n)
+var Uint64ToHexString = Uint64ToStringFunc(func(n uint64) string {
+	return strconv.FormatUint(n, 16)
 })
