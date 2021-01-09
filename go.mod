@@ -1,3 +1,3 @@
-module github.com/hnit-acm/go-common
+module github.com/hnit-acm/hfunc
 
 go 1.14
