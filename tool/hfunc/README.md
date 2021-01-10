@@ -1,4 +1,4 @@
-## tool
+## hfunc
 
 该项目为hfunc工具，提供一些批处理的动作，比如：hfunc new service 根据提供的模板生成服务目录，后续可以对该工具进行扩展。
 
