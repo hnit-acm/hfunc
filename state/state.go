@@ -1,7 +1,7 @@
 package state
 
 import (
-	"github.com/hnit-acm/go-common/basic"
+	"github.com/hnit-acm/hfunc/basic"
 )
 
 // todo 完善状态机逻辑
