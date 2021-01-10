@@ -1,7 +1,7 @@
 package sql
 
 import (
-	"github.com/hnit-acm/go-common/basic"
+	"github.com/hnit-acm/hfunc/basic"
 	"reflect"
 	"time"
 )

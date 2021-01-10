@@ -1,6 +1,6 @@
 package utils
 
-import "github.com/hnit-acm/go-common/basic"
+import "github.com/hnit-acm/hfunc/basic"
 
 func ArrayToString(p []interface{}, split string, funcs ...basic.ConcatFilterFunc) string {
 	return basic.Array(p).GetFunc().ToString(split, funcs...)
