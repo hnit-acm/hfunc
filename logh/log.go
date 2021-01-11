@@ -1,69 +1,67 @@
 package logh
 
-import (
-	"sync"
+import "sync"
 
-	log "github.com/sirupsen/logrus"
-)
-
-var (
-	logrusInstance *log.Logger
-	once           sync.Once
-)
-
-type Option func(*Config)
-
-type Config struct {
-	level Level
+var ppFree = sync.Pool{
+	New: func() interface{} { return new(printer) },
 }
 
-type Helper struct {
-	cfgs Config
+// Logger  interface.
+type Logger interface {
+	Print(v ...interface{})
 }
 
-func NewLogrusLog() *log.Logger {
-	once.Do(func() {
-		logrusInstance = log.New()
-	})
-	return logrusInstance
+type printer struct {
+	log     Logger
+	v       []interface{}
+	recycle bool
 }
 
-func NewHelper(opts ...Option) *Helper {
-	configs := Config{}
-	for _, o := range opts {
-		o(&configs)
+type nopLogger struct{}
+
+func (n *nopLogger) Print(kvpair ...interface{}) {}
+
+func newPrinter() *printer {
+	return ppFree.Get().(*printer)
+}
+
+func (l *printer) Print(v ...interface{}) {
+	l.log.Print(append(v, l.v...)...)
+	if l.recycle {
+		l.free()
 	}
-	return &Helper{cfgs: configs}
 }
 
-func (h *Helper) Info(v ...interface{}) {
-	log.Info(v...)
+func (l *printer) free() {
+	l.log = nil
+	l.v = nil
+	ppFree.Put(l)
 }
 
-func (h *Helper) Infof(f string, v ...interface{}) {
-	log.Infof(f, v...)
+func with(l Logger, free bool, v ...interface{}) Logger {
+	p := newPrinter()
+	p.log = l
+	p.v = v
+	p.recycle = free
+	return p
 }
 
-func Error(v ...interface{}) {
-	log.Error(v...)
+func With(l Logger, v ...interface{}) Logger {
+	return with(l, false, v)
 }
 
-func Errorf(f string, v ...interface{}) {
-	log.Errorf(f, v...)
+func Debug(l Logger) Logger {
+	return with(l, true, LevelKey, LevelDebug)
 }
 
-func Warn(v ...interface{}) {
-	log.Warn(v...)
+func Info(l Logger) Logger {
+	return with(l, true, LevelKey, LevelInfo)
 }
 
-func Warnf(f string, v ...interface{}) {
-	log.Warnf(f, v...)
+func Warn(l Logger) Logger {
+	return with(l, true, LevelKey, LevelWarn)
 }
 
-func Info(v ...interface{}) {
-	log.Info(v...)
-}
-
-func Infof(f string, v ...interface{}) {
-	log.Infof(f, v...)
+func Error(l Logger) Logger {
+	return with(l, true, LevelKey, LevelError)
 }

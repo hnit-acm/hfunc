@@ -1,1 +1,1 @@
-go-common examples
+hfunc examples

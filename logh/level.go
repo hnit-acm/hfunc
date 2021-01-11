@@ -1,7 +1,7 @@
 package logh
 
-// Level of severity.
-type Level int
+// Level is a logger level.
+type Level int8
 
 const (
 	// LevelDebug is logger debug level.
@@ -13,6 +13,16 @@ const (
 	// LevelError is logger error level.
 	LevelError
 )
+
+const (
+	// LevelKey is logger level key.
+	LevelKey = "level"
+)
+
+// Enabled compare whether the logging level is enabled.
+func (l Level) Enabled(lv Level) bool {
+	return lv >= l
+}
 
 func (l Level) String() string {
 	switch l {
