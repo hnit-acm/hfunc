@@ -1,10 +1,8 @@
 package logh
 
 import (
-	"os"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,19 +14,34 @@ var (
 type Option func(*Config)
 
 type Config struct {
+	level Level
 }
 
-func NewLogrusLog() *logrus.Logger {
+type Helper struct {
+	cfgs Config
+}
+
+func NewLogrusLog() *log.Logger {
 	once.Do(func() {
-		logrusInstance = logrus.New()
+		logrusInstance = log.New()
 	})
 	return logrusInstance
 }
 
-func init() {
-	log.SetFormatter(&log.JSONFormatter{})
+func NewHelper(opts ...Option) *Helper {
+	configs := Config{}
+	for _, o := range opts {
+		o(&configs)
+	}
+	return &Helper{cfgs: configs}
+}
 
-	log.SetOutput(os.Stdout)
+func (h *Helper) Info(v ...interface{}) {
+	log.Info(v...)
+}
+
+func (h *Helper) Infof(f string, v ...interface{}) {
+	log.Infof(f, v...)
 }
 
 func Error(v ...interface{}) {
