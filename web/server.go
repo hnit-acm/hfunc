@@ -16,8 +16,6 @@ import (
 // port 端口
 // regFunc 注册的路由函数
 func Server(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
-	// todo 修改为可自定义的
-	// assignee: yinrenxin
 	if g == nil {
 		g = gin.Default()
 	}
