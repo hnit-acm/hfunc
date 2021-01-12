@@ -42,13 +42,6 @@ type GetFieldsStringFunc func(p interface{}, splitChar, cacheNo string) string
 //tag:
 //	alias: 字段别名，对应sql别名，
 //	expr: 表达式，用于支持使用count，sum等函数
-//
-//
-//
-//
-//
-//
-//
 
 func NewGetFields(structFormatter StructFormatter) (GetFieldsArrayFunc, GetFieldsStringFunc) {
 	format, cache, split := structFormatter()
