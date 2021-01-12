@@ -17,7 +17,13 @@ type NewHandleFunc func() HandleFunc
 
 var _emptyHandleFunc = HandleFunc(
 	func() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
-		return "", "", "", nil
+		return "", "", "", func(context *gin.Context) {
+			context.JSON(200, map[string]interface{}{
+				"msg":  "pong",
+				"code": 0,
+				"data": "pong",
+			})
+		}
 	},
 )
 var _emptyNewHandleFunc = NewHandleFunc(
