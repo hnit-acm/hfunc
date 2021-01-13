@@ -49,7 +49,7 @@ func (q *Queue) Push(target interface{}) {
 }
 
 func (q *Queue) IsEmpty() bool {
-	return q.header == q.tail
+	return q.Len() == 0
 }
 
 func (q *Queue) Len() int {

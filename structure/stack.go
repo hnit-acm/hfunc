@@ -41,7 +41,7 @@ func (s *Stack) Push(target interface{}) {
 }
 
 func (s *Stack) IsEmpty() bool {
-	return s.size == 0
+	return s.Len() == 0
 }
 
 func (s *Stack) Len() int {
