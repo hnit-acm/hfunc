@@ -19,7 +19,9 @@ func Server(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
 	if g == nil {
 		g = gin.Default()
 	}
-	regFunc(g)
+	if regFunc != nil {
+		regFunc(g)
+	}
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: g,

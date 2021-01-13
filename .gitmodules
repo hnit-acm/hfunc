@@ -1,0 +1,3 @@
+[submodule "tool/hfunc/template"]
+	path = tool/hfunc/template
+	url = https://github.com/hnit-acm/template.git
