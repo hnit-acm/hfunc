@@ -10,7 +10,7 @@ func TestTimeString_GetNative(t *testing.T) {
 		t    TimeString
 		want string
 	}{
-		// TODO: Add test cases.
+		// TODO: add test cases.
 		{name: "", t: "asdasd", want: "asdasd"},
 	}
 	for _, tt := range tests {

@@ -11,7 +11,7 @@ func TestJsonString_GetMapStringInterface(t *testing.T) {
 		j       JsonString
 		wantRes map[string]interface{}
 	}{
-		// TODO: Add test cases.
+		// TODO: add test cases.
 		{
 			name:    "",
 			j:       "2020-01-01",
@@ -43,7 +43,7 @@ func TestJsonString_GetNative(t *testing.T) {
 		j    JsonString
 		want string
 	}{
-		// TODO: Add test cases.
+		// TODO: add test cases.
 		{
 			name: "",
 			j:    "{}",
