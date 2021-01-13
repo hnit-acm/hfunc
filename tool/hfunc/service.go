@@ -1,38 +1,15 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/hnit-acm/hfunc/basic"
-	"github.com/hnit-acm/hfunc/utils"
-	"html/template"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
+	"text/template"
 )
-
-func main() {
-	flag.Parse()
-	if !flag.Parsed() {
-		return
-	}
-	args := flag.Args()
-	fmt.Println(args)
-	argsString := utils.ArrayStringToString(args, " ")
-	exp, err := regexp.Compile(`^new \S+$`)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if exp.MatchString(argsString) {
-		fmt.Println("new service ", args[1])
-		newService(basic.String(args[1]))
-		return
-	}
-
-}
 
 func newService(name basic.String) bool {
 	fileList, _ := ioutil.ReadDir("./")
@@ -48,13 +25,19 @@ func newService(name basic.String) bool {
 			return true
 		}
 	}
-	fmt.Println("不存在模板文件")
-	return false
+	fmt.Println("不存在模板文件,正在下载模板文件")
+	if fetchTemplate() != nil {
+		fmt.Println("下载模板文件失败")
+		return false
+	}
+	fmt.Println("下载模板文件成功")
+	copyDir("template", name.GetNative(), name.GetNative())
+	return true
 }
 
-func copyDir(src, dest, serviceName string) {
+func copyDir(src, dest, serviceName string) (err error) {
 	fileList, _ := ioutil.ReadDir(src)
-	err := os.MkdirAll(dest, os.ModePerm)
+	err = os.MkdirAll(dest, os.ModePerm)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -63,7 +46,7 @@ func copyDir(src, dest, serviceName string) {
 		// 如果是目录
 		if info.IsDir() {
 			// 新建目录
-			err := os.MkdirAll(filepath.Join(dest, info.Name()), os.ModePerm)
+			err = os.MkdirAll(filepath.Join(dest, info.Name()), os.ModePerm)
 			if err != nil {
 				return
 			}
@@ -75,26 +58,34 @@ func copyDir(src, dest, serviceName string) {
 		t, err := template.ParseFiles(filepath.Join(src, info.Name()))
 		if err != nil {
 			fmt.Println(err)
-			return
+			return err
 		}
-		fmt.Println("src:" + filepath.Join(src, info.Name()))
-		fmt.Println("dest:" + filepath.Join(dest, strings.TrimSuffix(info.Name(), ".ht")))
 
 		f, err := os.OpenFile(filepath.Join(dest, strings.TrimSuffix(info.Name(), ".ht")), os.O_CREATE|os.O_RDWR, os.ModePerm)
 		if err != nil {
 			f.Close()
 			fmt.Println(err)
-			return
+			return err
 		}
 		err = t.Execute(f, map[string]string{"service_name": strings.Title(serviceName)})
 		if err != nil {
 			f.Close()
-			fmt.Println(2)
 			fmt.Println(err)
 			continue
 		}
-		//err := ioutil.WriteFile(filepath.Join(dest, info.Name()), data, os.ModePerm)
 		f.Close()
 		continue
 	}
+	return err
+}
+
+func fetchTemplate() error {
+	e := exec.Command("git", "clone", "https://github.com/hnit-acm/template")
+	fmt.Println(e.String())
+	err := e.Run()
+	if err != nil {
+		fmt.Println("下载模板文件失败")
+		return err
+	}
+	return nil
 }
