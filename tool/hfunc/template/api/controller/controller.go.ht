@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"net/http"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +26,7 @@ func (s {{.service_name}}Controller) Version() string {
 }
 
 func (s {{.service_name}}Controller) Ping() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
-	return "GET", "ping", "v1", func(context *gin.Context) {
+	return http.MethodGet, "ping", "v1", func(context *gin.Context) {
 				context.JSON(200, map[string]interface{}{
 					"msg":  "pong",
 					"code": 0,

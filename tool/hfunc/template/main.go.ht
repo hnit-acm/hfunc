@@ -1,6 +1,7 @@
 package main
 
 import (
+	"{{.service_name}}/api/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/hnit-acm/hfunc/web"
 )

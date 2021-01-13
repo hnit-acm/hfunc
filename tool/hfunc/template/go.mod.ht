@@ -1,0 +1,8 @@
+module {{.service_name}}
+
+go 1.14
+
+require (
+    github.com/hnit-acm/hfunc v0.0.8
+    github.com/gin-gonic/gin v1.6.3
+)
