@@ -17,7 +17,13 @@ type NewHandleFunc func() HandleFunc
 
 var _emptyHandleFunc = HandleFunc(
 	func() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
-		return "", "", "", nil
+		return "", "", "", func(context *gin.Context) {
+			context.JSON(200, map[string]interface{}{
+				"msg":  "pong",
+				"code": 0,
+				"data": "pong",
+			})
+		}
 	},
 )
 var _emptyNewHandleFunc = NewHandleFunc(
@@ -54,6 +60,7 @@ func RegisterHandleFunc(router *gin.Engine, routeReg func(*gin.Engine) *gin.Rout
 							httpMethod, routeUri, version, handlerFunc := f()
 							if version != "" {
 								r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+								continue
 							}
 							r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 						}
@@ -66,6 +73,7 @@ func RegisterHandleFunc(router *gin.Engine, routeReg func(*gin.Engine) *gin.Rout
 								outs[3].Interface().(gin.HandlerFunc)
 							if version != "" {
 								r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+								continue
 							}
 							r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 						}

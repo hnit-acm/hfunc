@@ -1,0 +1,36 @@
+package controller
+
+import (
+	"net/http"
+	"github.com/gin-gonic/gin"
+)
+
+type {{.service_name}}Controller struct {
+
+}
+
+func (s {{.service_name}}Controller) RouterRegister(group *gin.RouterGroup) {
+
+}
+
+func (s {{.service_name}}Controller) RouterGroupName() (name string) {
+	return "{{.service_name}}"
+}
+
+func (s {{.service_name}}Controller) Middlewares() (middlewares []gin.HandlerFunc) {
+	return []gin.HandlerFunc{}
+}
+
+func (s {{.service_name}}Controller) Version() string {
+	return "v1"
+}
+
+func (s {{.service_name}}Controller) Ping() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
+	return http.MethodGet, "ping", "v1", func(context *gin.Context) {
+				context.JSON(200, map[string]interface{}{
+					"msg":  "pong",
+					"code": 0,
+					"data": "pong",
+				})
+	}
+}
