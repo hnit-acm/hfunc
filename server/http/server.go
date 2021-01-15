@@ -2,42 +2,101 @@ package http
 
 import (
 	"context"
-	"log"
+	"crypto/tls"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/hnit-acm/hfunc/server"
 )
 
-// Server 启动gin server
-// port 端口
-// regFunc 注册的路由函数
-func Server(port string, regFunc func(c *gin.Engine)) {
-	g := gin.Default()
-	regFunc(g)
-	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: g,
+var _ server.Server = (*Server)(nil)
+
+// Option is HTTP server option.
+type Option func(o *options)
+
+// options is HTTP server options.
+type options struct {
+	handler      http.Handler
+	tlsConfig    *tls.Config
+	readTimeout  time.Duration
+	writeTimeout time.Duration
+	idleTimeout  time.Duration
+}
+
+// Handler with server handler.
+func Handler(h http.Handler) Option {
+	return func(o *options) {
+		o.handler = h
 	}
+}
 
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
-		}
-	}()
-
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
+// TLSConfig with server tls config.
+func TLSConfig(c *tls.Config) Option {
+	return func(o *options) {
+		o.tlsConfig = c
 	}
-	log.Println("Server exiting")
+}
+
+// ReadTimeout with read timeout.
+func ReadTimeout(timeout time.Duration) Option {
+	return func(o *options) {
+		o.readTimeout = timeout
+	}
+}
+
+// WriteTimeout with write timeout.
+func WriteTimeout(timeout time.Duration) Option {
+	return func(o *options) {
+		o.writeTimeout = timeout
+	}
+}
+
+// IdleTimeout with read timeout.
+func IdleTimeout(timeout time.Duration) Option {
+	return func(o *options) {
+		o.idleTimeout = timeout
+	}
+}
+
+// Server is a HTTP server wrapper.
+type Server struct {
+	*http.Server
+
+	network string
+	addr    string
+	opts    options
+}
+
+// NewServer creates a HTTP server by options.
+func NewServer(network, addr string, opts ...Option) *Server {
+	options := options{
+		readTimeout:  time.Second,
+		writeTimeout: time.Second,
+		idleTimeout:  time.Minute,
+	}
+	for _, o := range opts {
+		o(&options)
+	}
+	return &Server{
+		network: network,
+		addr:    addr,
+		opts:    options,
+		Server: &http.Server{
+			Handler:      options.handler,
+			TLSConfig:    options.tlsConfig,
+			ReadTimeout:  options.readTimeout,
+			WriteTimeout: options.writeTimeout,
+			IdleTimeout:  options.idleTimeout,
+		},
+	}
+}
+
+// Start start the HTTP server.
+func (s *Server) Start(ctx context.Context) error {
+	return s.ListenAndServe()
+}
+
+// Stop stop the HTTP server.
+func (s *Server) Stop(ctx context.Context) error {
+	return s.Shutdown(ctx)
 }
