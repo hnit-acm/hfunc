@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	serverhttp "github.com/hnit-acm/hfunc/server/http"
+	"golang.org/x/sync/errgroup"
 )
 
 // Server 启动gin server
@@ -23,25 +23,46 @@ func Server(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
 	if regFunc != nil {
 		regFunc(g)
 	}
-
 	httpServer := serverhttp.NewServer("tcp", ":"+port, serverhttp.Handler(g))
 
-	startCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	go func() {
-		if err := httpServer.Start(startCtx); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+	ctx, cancel := context.WithCancel(context.Background())
+	group, ctx := errgroup.WithContext(ctx)
+	sigs := []os.Signal{
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+		syscall.SIGINT,
+	}
+
+	group.Go(func() error {
+		startCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return httpServer.Start(startCtx)
+	})
+
+	group.Go(func() error {
+		<-ctx.Done() // 等待退出信号
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		log.Println("stop server")
+		return httpServer.Stop(stopCtx)
+	})
+
+	c := make(chan os.Signal, len(sigs))
+	signal.Notify(c, sigs...)
+	group.Go(func() error {
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case sig := <-c:
+				switch sig {
+				case syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM:
+					// 可以处理一些退出逻辑
+					cancel()
+				default:
+				}
+			}
 		}
-	}()
-
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
-
-	stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	httpServer.Stop(stopCtx)
-	log.Println("Server exiting")
+	})
+	group.Wait()
 }
