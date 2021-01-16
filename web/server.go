@@ -27,6 +27,7 @@ func Server(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
 	httpServer := serverhttp.NewServer("tcp", ":"+port, serverhttp.Handler(g))
 
 	startCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	go func() {
 		if err := httpServer.Start(startCtx); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)

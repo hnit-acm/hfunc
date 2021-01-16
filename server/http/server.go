@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"crypto/tls"
+	"net"
 	"net/http"
 	"time"
 
@@ -93,7 +94,11 @@ func NewServer(network, addr string, opts ...Option) *Server {
 
 // Start start the HTTP server.
 func (s *Server) Start(ctx context.Context) error {
-	return s.ListenAndServe()
+	lis, err := net.Listen(s.network, s.addr)
+	if err != nil {
+		return err
+	}
+	return s.Serve(lis)
 }
 
 // Stop stop the HTTP server.
