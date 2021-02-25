@@ -1,5 +1,24 @@
 package utils
 
+func SortSlice(slice interface{}) {
+
+}
+
+func SortInts(data []int) {
+	sortFunc := func() (LenFunc, LessFunc, SwapFunc) {
+		return func() int {
+				return len(data)
+			},
+			func(i, j int) bool {
+				return data[i] < data[j]
+			},
+			func(i, j int) {
+				data[i], data[j] = data[j], data[i]
+			}
+	}
+	SortFunc(sortFunc)
+}
+
 type LessFunc func(i, j int) bool
 type SwapFunc func(i, j int)
 type LenFunc func() int
@@ -16,12 +35,11 @@ func maxDepth(n int) int {
 }
 
 func SortFunc(sortFuncs SortFuncs) {
-	lenth, _, _ := sortFuncs()
-	quickSort(sortFuncs, 0, lenth(), maxDepth(lenth()))
+	lenth, less, swap := sortFuncs()
+	quickSort(less, swap, 0, lenth(), maxDepth(lenth()))
 }
 
-func insertionSort(sortFuncs SortFuncs, a, b int) {
-	_, less, swap := sortFuncs()
+func insertionSort(less LessFunc, swap SwapFunc, a, b int) {
 	for i := a + 1; i < b; i++ {
 		for j := i; j > a && less(j, j-1); j-- {
 			swap(j, j-1)
@@ -29,22 +47,21 @@ func insertionSort(sortFuncs SortFuncs, a, b int) {
 	}
 }
 
-func quickSort(sortFuncs SortFuncs, a, b, maxDepth int) {
-	_, less, swap := sortFuncs()
+func quickSort(less LessFunc, swap SwapFunc, a, b, maxDepth int) {
 	for b-a > 12 { // Use ShellSort for slices <= 12 elements
 		if maxDepth == 0 {
-			heapSort(sortFuncs, a, b)
+			heapSort(less, swap, a, b)
 			return
 		}
 		maxDepth--
-		mlo, mhi := doPivot(sortFuncs, a, b)
+		mlo, mhi := doPivot(less, swap, a, b)
 		// Avoiding recursion on the larger subproblem guarantees
 		// a stack depth of at most lg(b-a).
 		if mlo-a < b-mhi {
-			quickSort(sortFuncs, a, mlo, maxDepth)
+			quickSort(less, swap, a, mlo, maxDepth)
 			a = mhi // i.e., quickSort(data, mhi, b)
 		} else {
-			quickSort(sortFuncs, mhi, b, maxDepth)
+			quickSort(less, swap, mhi, b, maxDepth)
 			b = mlo // i.e., quickSort(data, a, mlo)
 		}
 	}
@@ -56,14 +73,13 @@ func quickSort(sortFuncs SortFuncs, a, b, maxDepth int) {
 				swap(i, i-6)
 			}
 		}
-		insertionSort(sortFuncs, a, b)
+		insertionSort(less, swap, a, b)
 	}
 }
 
 // first is an offset into the array where the root of the heap lies.
-func siftDown(sortFuncs SortFuncs, lo, hi, first int) {
+func siftDown(less LessFunc, swap SwapFunc, lo, hi, first int) {
 	root := lo
-	_, less, swap := sortFuncs()
 	for {
 		child := 2*root + 1
 		if child >= hi {
@@ -80,27 +96,25 @@ func siftDown(sortFuncs SortFuncs, lo, hi, first int) {
 	}
 }
 
-func heapSort(sortFuncs SortFuncs, a, b int) {
+func heapSort(less LessFunc, swap SwapFunc, a, b int) {
 	first := a
 	lo := 0
 	hi := b - a
-	_, _, swap := sortFuncs()
 
 	// Build heap with greatest element at top.
 	for i := (hi - 1) / 2; i >= 0; i-- {
-		siftDown(sortFuncs, i, hi, first)
+		siftDown(less, swap, i, hi, first)
 	}
 
 	// Pop elements, largest first, into end of data.
 	for i := hi - 1; i >= 0; i-- {
 		swap(first, first+i)
-		siftDown(sortFuncs, lo, i, first)
+		siftDown(less, swap, lo, i, first)
 	}
 }
 
-func medianOfThree(sortFuncs SortFuncs, m1, m0, m2 int) {
+func medianOfThree(less LessFunc, swap SwapFunc, m1, m0, m2 int) {
 	// sort 3 elements
-	_, less, swap := sortFuncs()
 
 	if less(m1, m0) {
 		swap(m1, m0)
@@ -116,17 +130,16 @@ func medianOfThree(sortFuncs SortFuncs, m1, m0, m2 int) {
 	// now data[m0] <= data[m1] <= data[m2]
 }
 
-func doPivot(sortFuncs SortFuncs, lo, hi int) (midlo, midhi int) {
-	_, less, swap := sortFuncs()
+func doPivot(less LessFunc, swap SwapFunc, lo, hi int) (midlo, midhi int) {
 	m := int(uint(lo+hi) >> 1) // Written like this to avoid integer overflow.
 	if hi-lo > 40 {
 		// Tukey's ``Ninther,'' median of three medians of three.
 		s := (hi - lo) / 8
-		medianOfThree(sortFuncs, lo, lo+s, lo+2*s)
-		medianOfThree(sortFuncs, m, m-s, m+s)
-		medianOfThree(sortFuncs, hi-1, hi-1-s, hi-1-2*s)
+		medianOfThree(less, swap, lo, lo+s, lo+2*s)
+		medianOfThree(less, swap, m, m-s, m+s)
+		medianOfThree(less, swap, hi-1, hi-1-s, hi-1-2*s)
 	}
-	medianOfThree(sortFuncs, lo, m, hi-1)
+	medianOfThree(less, swap, lo, m, hi-1)
 
 	// Invariants are:
 	//	data[lo] = pivot (set up by ChoosePivot)
