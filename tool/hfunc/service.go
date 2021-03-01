@@ -45,6 +45,9 @@ func copyDir(src, dest, serviceName string) (err error) {
 	for _, info := range fileList {
 		// 如果是目录
 		if info.IsDir() {
+			if info.Name() == ".git" {
+				continue
+			}
 			// 新建目录
 			err = os.MkdirAll(filepath.Join(dest, info.Name()), os.ModePerm)
 			if err != nil {
