@@ -1,28 +1,38 @@
 package office
 
 import (
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"regexp"
 	"strings"
 )
 
-// {{.name}} 值
 // 占位符
 // {{name}} 值
-// {{name.c}} 按单位列
-// {{name.r}} 按单位行
-// {{name.mc}} 按合并列
-// {{name.mr}} 按合并行
+// {{.name}} 值
+// {{name.c}} 按单位列 -- 未来
+// {{name.r}} 按单位行 -- 未来
+// {{name.mc}} 按合并列 -- 未来
+// {{name.mr}} 按合并行 -- 未来
 
-const NameRegStr = `([A-Z]|[a-z]|[0-9]|_|)+`
-const ValRegStr = `\.` + NameRegStr
+const signalNameRegStr = `([A-Z]|[a-z]|[0-9]|_|)+`
+const signalValRegStr = `\.` + signalNameRegStr
+const SignalRegStr = `{{(` + `(` + signalNameRegStr + `)|(` + signalValRegStr + `)` + `)}}`
 
-const SeatSignal = `{{([A-Z]|[a-z]|[0-9]|_|\.)+}}`
+var SignalReg, _ = regexp.Compile(SignalRegStr)
+var SignalValReg, _ = regexp.Compile(signalValRegStr)
+var SignalRegAll, _ = regexp.Compile("^" + SignalRegStr + "$")
+var SignalValRegAll, _ = regexp.Compile("^" + signalValRegStr + "$")
 
-const SeatValueSignal = `^{{\.([A-Z]|[a-z]|[0-9]|_)+}}$`
+func RmPlaceholderSignal(signal string) string {
+	return strings.Trim(signal, "({{)|.|(}})")
+}
 
-var SeatReg, _ = regexp.Compile(SeatSignal)
-var SeatValueReg, _ = regexp.Compile(SeatValueSignal)
+func IsSignal(signal string) bool {
+	return SignalRegAll.MatchString(signal)
+}
+
+func IsSignalVal(signal string) bool {
+	return SignalValRegAll.MatchString(signal)
+}
 
 type PlaceholderHandler interface {
 	NoEmptyHandler(excel *SheetFunc, placeholder PlaceholderIface, signal string) (string, error)
@@ -53,34 +63,44 @@ func (p Placeholder) CellVal() UnitCellIface {
 }
 
 func (e *SheetFunc) SetPlaceholder(placeholder PlaceholderIface, data map[string]interface{}) error {
+	// 处理数据
 	text := placeholder.CellVal().Val()
 	for _, signalVal := range placeholder.SignalsVal() {
-		val, ok := data[signalVal]
+		key := RmPlaceholderSignal(signalVal)
+		val, ok := data[key]
 		// 如果有数据
 		if ok {
+			// 如果实现了处理接口
 			if placeholderHandler, ok := IsPlaceholderHandler(val); ok {
 				noEmpty, err := placeholderHandler.NoEmptyHandler(e, placeholder, signalVal)
 				if err != nil {
 					return err
 				}
 				if noEmpty == "" {
-					continue
+					return nil
 				}
 				val = noEmpty
 			}
-			strings.ReplaceAll(text.(string), signalVal, val.(string))
+			text = strings.ReplaceAll(text.(string), signalVal, val.(string))
 		} else { // 如果没有数据
+			// 如果实现了处理接口
 			if placeholderHandler, ok := IsPlaceholderHandler(val); ok {
 				noEmpty, err := placeholderHandler.EmptyHandler(e, placeholder, signalVal)
 				if err != nil {
 					return err
 				}
+				// 如果为空，则说明在handler已经处理了数据
+				if noEmpty == "" {
+					return nil
+				}
 				strings.ReplaceAll(text.(string), signalVal, noEmpty)
 				continue
 			}
-			strings.ReplaceAll(text.(string), signalVal, "")
+			text = strings.ReplaceAll(text.(string), signalVal, "")
 		}
 	}
+	// 填充数据
+	// 如果是合并单元格
 	if mergedCell, ok := IsMergedCell(placeholder.CellVal()); ok {
 		err := e.SetMergeCellValue(mergedCell, text)
 		if err != nil {
@@ -95,38 +115,17 @@ func (e *SheetFunc) SetPlaceholder(placeholder PlaceholderIface, data map[string
 	return nil
 }
 
-func (e *SheetFunc) ParseN() (res []PlaceholderIface, err error) {
-	placeHolders, err := e.Search(SeatSignal, true)
+func (e *SheetFunc) Parse() (res []PlaceholderIface, err error) {
+	placeHolders, err := e.Search(SignalRegStr, true)
 	if err != nil {
 		return
 	}
 	for _, placeholder := range placeHolders {
 		item := Placeholder{
-			Signals: SeatReg.FindAllString(placeholder.Val().(string), -1),
+			Signals: SignalReg.FindAllString(placeholder.Val().(string), -1),
 			Cell:    placeholder,
 		}
 		res = append(res, item)
 	}
 	return
-}
-
-type AxisItem struct {
-	Start   string
-	End     string
-	IsMerge bool
-}
-
-type SeatItem struct {
-	Text string
-	Name []string
-	Axis AxisItem
-}
-
-func (a AxisItem) CreateRowIndex() (next func() string) {
-	index := a.Start
-	return func() string {
-		c, r, _ := excelize.SplitCellName(index)
-		index, _ = excelize.JoinCellName(c, r+1)
-		return index
-	}
 }

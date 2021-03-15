@@ -3,6 +3,7 @@ package office
 import (
 	"errors"
 	"fmt"
+	"github.com/hnit-acm/hfunc/utils"
 	"strings"
 )
 
@@ -85,7 +86,11 @@ func (e *SheetFunc) CreateRowIndexWithMerged(start UnitCellIface) func() UnitCel
 // SetRowWithMerged 按单位单元格或合并单元格（取决于excel中格式）设置值
 func (e *SheetFunc) SetRowWithMerged(startAxis UnitCellIface, slice interface{}) error {
 	nextColCell := e.CreateColIndexWithMerged(startAxis)
-	data := slice.([]interface{})
+	var data []interface{}
+	err := utils.SourceToTarget(slice, &data)
+	if err != nil {
+		return err
+	}
 	for _, datum := range data {
 		err := e.SetCellValue(nextColCell(), datum)
 		if err != nil {
