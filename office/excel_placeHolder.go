@@ -35,9 +35,27 @@ func IsSignalVal(signal string) bool {
 	return SignalValRegAll.MatchString(signal)
 }
 
+type EmptyHandler interface {
+	EmptyHandle(sheet *SheetFunc, placeholder PlaceholderIface, signal string) (string, error)
+}
+
+type NoEmptyHandler interface {
+	NoEmptyHandle(excel *SheetFunc, placeholder PlaceholderIface, signal string) (string, error)
+}
+
+func IsNoEmptyHandler(data interface{}) (NoEmptyHandler, bool) {
+	val, ok := data.(NoEmptyHandler)
+	return val, ok
+}
+
+func IsEmptyHandler(data interface{}) (EmptyHandler, bool) {
+	val, ok := data.(EmptyHandler)
+	return val, ok
+}
+
 type PlaceholderHandler interface {
-	NoEmptyHandler(excel *SheetFunc, placeholder PlaceholderIface, signal string) (string, error)
-	EmptyHandler(excel *SheetFunc, placeholder PlaceholderIface, signal string) (string, error)
+	NoEmptyHandler
+	EmptyHandler
 }
 
 func IsPlaceholderHandler(data interface{}) (PlaceholderHandler, bool) {
@@ -72,8 +90,8 @@ func (e *SheetFunc) SetPlaceholder(placeholder PlaceholderIface, data map[string
 		// 如果有数据
 		if ok {
 			// 如果实现了处理接口
-			if placeholderHandler, ok := IsPlaceholderHandler(val); ok {
-				noEmpty, err := placeholderHandler.NoEmptyHandler(e, placeholder, signalVal)
+			if placeholderHandler, ok := IsNoEmptyHandler(val); ok {
+				noEmpty, err := placeholderHandler.NoEmptyHandle(e, placeholder, signalVal)
 				if err != nil {
 					return err
 				}
@@ -85,8 +103,8 @@ func (e *SheetFunc) SetPlaceholder(placeholder PlaceholderIface, data map[string
 			text = strings.ReplaceAll(utils.AnyToString(text), signalVal, utils.AnyToString(val))
 		} else { // 如果没有数据
 			// 如果实现了处理接口
-			if placeholderHandler, ok := IsPlaceholderHandler(val); ok {
-				noEmpty, err := placeholderHandler.EmptyHandler(e, placeholder, signalVal)
+			if placeholderHandler, ok := IsEmptyHandler(val); ok {
+				noEmpty, err := placeholderHandler.EmptyHandle(e, placeholder, signalVal)
 				if err != nil {
 					return err
 				}
