@@ -2,7 +2,6 @@ package office
 
 import (
 	"errors"
-	"fmt"
 	"github.com/hnit-acm/hfunc/utils"
 	"strings"
 )
@@ -49,7 +48,6 @@ func (e *SheetFunc) CreateColIndexWithMerged(start UnitCellIface) func() UnitCel
 			index++
 		}
 		tempCell.Col = string(index)
-		fmt.Println(tempCell)
 		return tempCell
 	}
 }
@@ -78,7 +76,6 @@ func (e *SheetFunc) CreateRowIndexWithMerged(start UnitCellIface) func() UnitCel
 			index++
 		}
 		tempCell.Row = index
-		fmt.Println(tempCell)
 		return tempCell
 	}
 }

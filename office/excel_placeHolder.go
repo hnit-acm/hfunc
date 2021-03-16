@@ -1,6 +1,7 @@
 package office
 
 import (
+	"github.com/hnit-acm/hfunc/utils"
 	"regexp"
 	"strings"
 )
@@ -81,7 +82,7 @@ func (e *SheetFunc) SetPlaceholder(placeholder PlaceholderIface, data map[string
 				}
 				val = noEmpty
 			}
-			text = strings.ReplaceAll(text.(string), signalVal, val.(string))
+			text = strings.ReplaceAll(utils.AnyToString(text), signalVal, utils.AnyToString(val))
 		} else { // 如果没有数据
 			// 如果实现了处理接口
 			if placeholderHandler, ok := IsPlaceholderHandler(val); ok {
