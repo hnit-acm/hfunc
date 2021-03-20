@@ -90,14 +90,14 @@ func ServerTimeout(port string, g *gin.Engine, regFunc func(c *gin.Engine), clea
 	}
 
 	group.Go(func() error {
-		startCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		startCtx, cancel := context.WithTimeout(context.Background(), timeOut)
 		defer cancel()
 		return httpServer.Start(startCtx)
 	})
 
 	group.Go(func() error {
 		<-ctx.Done() // 等待退出信号
-		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		stopCtx, cancel := context.WithTimeout(context.Background(), timeOut)
 		defer cancel()
 		log.Println("stop server")
 		return httpServer.Stop(stopCtx)
