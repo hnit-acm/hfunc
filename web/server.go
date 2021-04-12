@@ -72,14 +72,15 @@ func Server(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
 // regFunc 注册的路由函数
 // clearFunc server退出逻辑处理
 // timeOut 超时时间
-func ServerTimeout(port string, g *gin.Engine, regFunc func(c *gin.Engine), clearFunc func(), timeOut time.Duration) {
+func ServerTimeout(port string, g *gin.Engine, regFunc func(c *gin.Engine), clearFunc func(), timeOut time.Duration, opts ...serverhttp.Option) {
 	if g == nil {
 		g = gin.Default()
 	}
 	if regFunc != nil {
 		regFunc(g)
 	}
-	httpServer := serverhttp.NewServer("tcp", ":"+port, serverhttp.Handler(g))
+	opts = append(opts, serverhttp.Handler(g))
+	httpServer := serverhttp.NewServer("tcp", ":"+port, opts...)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	group, ctx := errgroup.WithContext(ctx)
