@@ -1,4 +1,4 @@
-module tool/hfunc
+module github.com/hnit-acm/hfunc/tool/hfunc
 
 go 1.16
 
