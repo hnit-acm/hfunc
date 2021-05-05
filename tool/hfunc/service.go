@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"github.com/hnit-acm/hfunc/basic"
 	"io/ioutil"
@@ -11,7 +12,11 @@ import (
 	"text/template"
 )
 
+//go:embed template
+var templateFiles embed.FS
+
 func newService(name basic.String) bool {
+
 	fileList, _ := ioutil.ReadDir("./")
 	for _, fileInfo := range fileList {
 		// 如果存在模板文件
@@ -25,18 +30,12 @@ func newService(name basic.String) bool {
 			return true
 		}
 	}
-	fmt.Println("不存在模板文件,正在下载模板文件")
-	if fetchTemplate() != nil {
-		fmt.Println("下载模板文件失败")
-		return false
-	}
-	fmt.Println("下载模板文件成功")
 	copyDir("template", name.GetNative(), name.GetNative())
 	return true
 }
 
 func copyDir(src, dest, serviceName string) (err error) {
-	fileList, _ := ioutil.ReadDir(src)
+	fileList, _ := templateFiles.ReadDir(src)
 	err = os.MkdirAll(dest, os.ModePerm)
 	if err != nil {
 		fmt.Println(err)
