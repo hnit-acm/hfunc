@@ -1,7 +1,7 @@
 package main
 
 import (
-	"{{.service_name}}/api/controller"
+	"{{.serviceName}}/api/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/hnit-acm/hfunc/web"
 )
@@ -10,6 +10,6 @@ func main() {
 	web.Server("3001",nil, func(c *gin.Engine) {
 		web.RegisterHandleFunc(c, func(engine *gin.Engine) *gin.RouterGroup {
 			return engine.Group("/api")
-		},controller.{{.service_name}}Controller{})
+		},controller.{{.serviceName}}Controller{})
 	})
 }

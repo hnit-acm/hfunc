@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/hnit-acm/hfunc/basic"
+	"github.com/hnit-acm/hfunc/utils"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,7 +17,6 @@ import (
 var templateFiles embed.FS
 
 func newService(name basic.String) bool {
-
 	fileList, _ := ioutil.ReadDir("./")
 	for _, fileInfo := range fileList {
 		// 如果存在模板文件
@@ -55,21 +55,20 @@ func copyDir(src, dest, serviceName string) (err error) {
 			copyDir(filepath.Join(src, info.Name()), filepath.Join(dest, info.Name()), serviceName)
 			continue
 		}
-		// 文件
-		//data, _ := ioutil.ReadFile(filepath.Join(src, info.Name()))
-		t, err := template.ParseFiles(filepath.Join(src, info.Name()))
+		t, err := template.New(info.Name()).Funcs(template.FuncMap{
+			"toSnakeString": utils.StringToSnakeCasedString,
+		}).ParseFS(templateFiles, filepath.Join(src, info.Name()))
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
-
 		f, err := os.OpenFile(filepath.Join(dest, strings.TrimSuffix(info.Name(), ".ht")), os.O_CREATE|os.O_RDWR, os.ModePerm)
 		if err != nil {
 			f.Close()
 			fmt.Println(err)
 			return err
 		}
-		err = t.Execute(f, map[string]string{"service_name": strings.Title(serviceName)})
+		err = t.Execute(f, map[string]string{"serviceName": strings.Title(serviceName)})
 		if err != nil {
 			f.Close()
 			fmt.Println(err)
