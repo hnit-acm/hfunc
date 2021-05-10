@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/hnit-acm/hfunc/basic"
 	"github.com/urfave/cli/v2"
+	"log"
 	"os"
 )
 
@@ -72,25 +74,22 @@ func main() {
 				Usage:   "sync config directory between service and service",
 				Action:  nil,
 			},
+			{
+				Name: "version",
+				Aliases: []string{
+					"v",
+				},
+				Usage: "sync config directory between service and service",
+				Action: func(ctx *cli.Context) error {
+					fmt.Printf("hfunc %s", Version)
+					return nil
+				},
+			},
 		},
 	}
-	app.Run(os.Args)
-	//
-	//flag.Parse()
-	//if !flag.Parsed() {
-	//	return
-	//}
-	//args := flag.Args()
-	//fmt.Println(args)
-	//argsString := utils.ArrayStringToString(args, " ")
-	////expNewService, _ := regexp.Compile(`^new \S+$`)
-	////expNewService, _ := regexp.Compile(`^new \S+$`)
-	//switch {
-	//case expNewService.MatchString(argsString):
-	//	{
-	//		fmt.Println("new service ", args[1])
-	//		newService(basic.String(args[1]))
-	//		return
-	//	}
-	//}
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
