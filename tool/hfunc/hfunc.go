@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/hnit-acm/hfunc/basic"
 	"github.com/urfave/cli/v2"
-	"log"
 	"os"
+	"runtime"
 )
 
 func main() {
@@ -75,13 +75,38 @@ func main() {
 				Action:  nil,
 			},
 			{
+				Name:    "swag",
+				Aliases: nil,
+				Usage:   "start an api doc server",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "port",
+						Aliases: []string{
+							"p",
+						}},
+				},
+				Action: func(c *cli.Context) error {
+					path := c.Args().Get(0)
+					if path == "" {
+						path = "./docs"
+					}
+					port := c.String("port")
+					if port == "" {
+						port = "4000"
+					}
+					logh.Info("swag: filePath:%v", path)
+					logh.Info("swag: port:%v", port)
+					return InitSwag(path+"/swagger.json", port)
+				},
+			},
+			{
 				Name: "version",
 				Aliases: []string{
 					"v",
 				},
 				Usage: "sync config directory between service and service",
 				Action: func(ctx *cli.Context) error {
-					fmt.Printf("hfunc %s", Version)
+					fmt.Printf("hfunc version %v %v/%v\n", Version, runtime.GOOS, runtime.GOARCH)
 					return nil
 				},
 			},
@@ -89,7 +114,7 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Println(err)
+		logh.Error(err)
 		return
 	}
 }
