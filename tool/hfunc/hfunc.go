@@ -94,8 +94,6 @@ func main() {
 					if port == "" {
 						port = "4000"
 					}
-					logh.Info("swag: filePath:%v", path)
-					logh.Info("swag: port:%v", port)
 					return InitSwag(path+"/swagger.json", port)
 				},
 			},
