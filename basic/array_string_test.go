@@ -14,7 +14,7 @@ func TestStringArray_ToString(t *testing.T) {
 		args    args
 		wantRes string
 	}{
-		// TODO: Add test cases.
+		// TODO: add test cases.
 		{
 			name: "",
 			s:    ArrayString{"a", "b", "c"},

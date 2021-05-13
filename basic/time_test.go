@@ -11,7 +11,7 @@ func TestTimeFunc_FormatDate(t *testing.T) {
 		t    TimeFunc
 		want string
 	}{
-		// TODO: Add test cases.
+		// TODO: add test cases.
 		{
 			name: "",
 			t: func() time.Time {
