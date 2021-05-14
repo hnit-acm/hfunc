@@ -28,7 +28,7 @@ hfunc 一套轻量级 Go 微服务框架，包含大量微服务相关框架及�
 ### Install hfunc
 ```
 # 安装生成工具
-go get github.com/hnit-acm/hfunc/tool/hfunc
+go get github.com/hnit-acm/hfunc/cmd/hfunc
 ```
 ### Create a service
 ```

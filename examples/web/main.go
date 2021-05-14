@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/hnit-acm/hfunc/web"
+	"github.com/hnit-acm/hfunc/apih"
 )
 
 type testController struct {
 }
 
-func (testController) HelloFunc() web.HandleFunc {
+func (testController) HelloFunc() apih.HandleFunc {
 	return func() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
 		return "GET", "helloFunc", "", func(c *gin.Context) {
 			fmt.Println("runing hello world")
@@ -49,8 +49,8 @@ func (t testController) Middlewares() (middlewares []gin.HandlerFunc) {
 	}
 }
 
-var test2Controller = web.ControllerFunc(
-	func() (web.RouterRegisterFunc, web.RouterGroupNameFunc, web.MiddlewaresFunc, web.VersionFunc) {
+var test2Controller = apih.ControllerFunc(
+	func() (apih.RouterRegisterFunc, apih.RouterGroupNameFunc, apih.MiddlewaresFunc, apih.VersionFunc) {
 		return func(group *gin.RouterGroup) {
 				group.GET("hello", func(context *gin.Context) {
 					context.JSON(200, "heihei")
@@ -68,26 +68,26 @@ var test2Controller = web.ControllerFunc(
 )
 
 func main() {
-	web.Server("8080", nil, func(c *gin.Engine) {
-		web.Register(c,
+	apih.Server("8080", nil, func(c *gin.Engine) {
+		apih.Register(c,
 			func(engine *gin.Engine) *gin.RouterGroup {
-				return engine.Group("/api")
+				return engine.Group("/apih")
 			},
 			testController{},
 		)
 
-		web.RegisterFunc(
+		apih.RegisterFunc(
 			c,
 			func(engine *gin.Engine) *gin.RouterGroup {
-				return engine.Group("/api")
+				return engine.Group("/apih")
 			},
 			test2Controller,
 		)
 
-		web.RegisterHandleFunc(
+		apih.RegisterHandleFunc(
 			c,
 			func(engine *gin.Engine) *gin.RouterGroup {
-				return engine.Group("/api")
+				return engine.Group("/apih")
 			},
 			testController{},
 		)

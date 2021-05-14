@@ -1,7 +1,7 @@
 package state
 
 import (
-	"github.com/hnit-acm/hfunc/basic"
+	"github.com/hnit-acm/hfunc/basich"
 )
 
 // todo 完善状态机逻辑
@@ -13,7 +13,7 @@ type EventMap map[StateKey]func(key StateKey) StateFunc
 type StateKey interface{}
 
 // 状态实例
-type StateMachineMap basic.MapFunc
+type StateMachineMap basich.MapFunc
 
 type StateFunc func()
 
@@ -25,7 +25,7 @@ type StateMachineFunc func() (SetStateFunc, ExecStateFunc, DelStateFunc)
 
 var StateMachine = StateMachineFunc(func() (SetStateFunc, ExecStateFunc, DelStateFunc) {
 	// 状态维护
-	get, set, del := basic.NewSyncMapFunc(1024)
+	get, set, del := basich.NewSyncMapFunc(1024)
 	SetStateFunc := SetStateFunc(func(key StateKey, stateFunc StateFunc) {
 		set(key, stateFunc)
 	})

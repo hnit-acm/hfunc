@@ -1,6 +1,6 @@
 module github.com/hnit-acm/hfunc
 
-go 1.14
+go 1.13
 
 require (
 	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
