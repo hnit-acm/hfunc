@@ -73,7 +73,7 @@ func InitSwag(filePath, port string) error {
 
 	web.Server(port, gin.Default(), func(c *gin.Engine) {
 		c.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-		c.Any("/apih/*any", func(ctx *gin.Context) {
+		c.Any("/api/*any", func(ctx *gin.Context) {
 			u, err := url.Parse("http://" + swagger.Host)
 			if err != nil {
 				ctx.JSON(http.StatusBadRequest, err)
