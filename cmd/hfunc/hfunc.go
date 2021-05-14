@@ -97,12 +97,48 @@ func main() {
 					return InitSwag(path+"/swagger.json", port)
 				},
 			},
+			//{
+			//	Name: "redis",
+			//	Aliases: []string{
+			//		"r",
+			//	},
+			//	Usage: "start redis instance or cluster",
+			//	Flags: []cli.Flag{
+			//		&cli.StringFlag{
+			//			Name:        "instance",
+			//			Aliases: []string{
+			//				"i",
+			//			},
+			//		},
+			//		&cli.StringFlag{
+			//			Name:        "cluster",
+			//			Aliases: []string{
+			//				"c",
+			//			},
+			//		},
+			//	},
+			//	Action: func(ctx *cli.Context) error {
+			//		fmt.Printf("hfunc version %v %v/%v\n", Version, runtime.GOOS, runtime.GOARCH)
+			//		return nil
+			//	},
+			//},
+			//{
+			//	Name: "doctor",
+			//	Aliases: []string{
+			//		"d",
+			//	},
+			//	Usage: "check environment",
+			//	Action: func(ctx *cli.Context) error {
+			//		fmt.Printf("hfunc version %v %v/%v\n", Version, runtime.GOOS, runtime.GOARCH)
+			//		return nil
+			//	},
+			//},
 			{
 				Name: "version",
 				Aliases: []string{
 					"v",
 				},
-				Usage: "sync config directory between service and service",
+				Usage: "current version",
 				Action: func(ctx *cli.Context) error {
 					fmt.Printf("hfunc version %v %v/%v\n", Version, runtime.GOOS, runtime.GOARCH)
 					return nil

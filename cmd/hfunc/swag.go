@@ -66,8 +66,8 @@ func InitSwag(filePath, port string) error {
 		filePath: filePath,
 	})
 
-	logh.Info("swag: apih address:\t%v", swagger.Host)
-	logh.Info("swag: apih basePath:\t%v ", swagger.BasePath)
+	logh.Info("swag: api address:\t%v", swagger.Host)
+	logh.Info("swag: api basePath:\t%v ", swagger.BasePath)
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -82,7 +82,7 @@ func InitSwag(filePath, port string) error {
 			proxy.ServeHTTP(ctx.Writer, ctx.Request)
 			return
 		})
-		logh.Info(fmt.Sprintf("swag: uih:\t\thttph://127.0.0.1:%v/swagger/index.html\n", port))
+		logh.Info(fmt.Sprintf("swag: uih:\t\thttp://127.0.0.1:%v/swagger/index.html\n", port))
 	})
 	return err
 }
