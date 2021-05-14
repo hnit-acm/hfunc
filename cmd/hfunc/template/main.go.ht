@@ -3,12 +3,12 @@ package main
 import (
 	"{{.serviceName}}/api/controller"
 	"github.com/gin-gonic/gin"
-	"github.com/hnit-acm/hfunc/web"
+	"github.com/hnit-acm/hfunc/hapi"
 )
 
 func main() {
-	web.Server("3001",nil, func(c *gin.Engine) {
-		web.RegisterHandleFunc(c, func(engine *gin.Engine) *gin.RouterGroup {
+	hapi.Server("3001",nil, func(c *gin.Engine) {
+		hapi.RegisterHandleFunc(c, func(engine *gin.Engine) *gin.RouterGroup {
 			return engine.Group("/api")
 		},controller.{{.serviceName}}Controller{})
 	})
