@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/hnit-acm/hfunc/hapi"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hnit-acm/hfunc/serverh/httph"
 )
 
 func Hello(c *gin.Context) {
@@ -33,7 +33,7 @@ func Middleware(c *gin.Context) {
 }
 
 func main() {
-	httph.Server("8080", func(c *gin.Engine) {
+	hapi.Server("8080", nil, func(c *gin.Engine) {
 		Router(c, Middleware)
 	})
 }
