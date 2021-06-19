@@ -26,19 +26,21 @@ func (s StringFunc) GetNative() string {
 
 type StringFormatFunc func(string) string
 
-var SnakeCasedStringFormat = StringFormatFunc(func(s string) string {
-	newstr := make([]rune, 0)
-	for idx, chr := range s {
-		if isUpper := 'A' <= chr && chr <= 'Z'; isUpper {
-			if idx > 0 {
-				newstr = append(newstr, '_')
+var NewSnakeCasedStringFormat = func(s string, c ...rune) StringFormatFunc {
+	return StringFormatFunc(func(s string) string {
+		newstr := make([]rune, 0)
+		for idx, chr := range s {
+			if isUpper := 'A' <= chr && chr <= 'Z'; isUpper {
+				if idx > 0 {
+					newstr = append(newstr, c...)
+				}
+				chr -= 'A' - 'a'
 			}
-			chr -= 'A' - 'a'
+			newstr = append(newstr, chr)
 		}
-		newstr = append(newstr, chr)
-	}
-	return string(newstr)
-})
+		return string(newstr)
+	})
+}
 
 type StringEncodeFunc func(str string, hash hash.Hash, sum ...string) string
 
@@ -56,8 +58,11 @@ func (s StringFunc) Format(f StringFormatFunc) string {
 	return f(s())
 }
 
-func (s StringFunc) SnakeCasedString() string {
-	return s.Format(SnakeCasedStringFormat)
+func (s StringFunc) SnakeCasedString(c ...rune) string {
+	if len(c) != 0 {
+		return s.Format(NewSnakeCasedStringFormat(s.GetNative(), c...))
+	}
+	return s.Format(NewSnakeCasedStringFormat(s.GetNative(), '-'))
 }
 
 func (s StringFunc) StringEncodeFunc(f StringEncodeFunc, hash hash.Hash, sum ...string) string {

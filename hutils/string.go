@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func StringToSnakeCasedString(str string) string {
-	return hbasic.String(str).GetFunc().SnakeCasedString()
+func StringToSnakeCasedString(str string, char ...rune) string {
+	return hbasic.String(str).GetFunc().SnakeCasedString(char...)
 }
 
 func JsonStringToMapStringInterface(jsonStr string) (res map[string]interface{}) {
