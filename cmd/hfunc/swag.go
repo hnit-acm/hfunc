@@ -82,7 +82,7 @@ func InitSwag(filePath, port string) error {
 			proxy.ServeHTTP(ctx.Writer, ctx.Request)
 			return
 		})
-		logh.Info(fmt.Sprintf("swag: uih:\t\thttp://127.0.0.1:%v/swagger/index.html\n", port))
+		logh.Info(fmt.Sprintf("swag: ui:\t\thttp://127.0.0.1:%v/swagger/index.html\n", port))
 	})
 	return err
 }
