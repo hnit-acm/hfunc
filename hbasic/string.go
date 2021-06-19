@@ -62,7 +62,7 @@ func (s StringFunc) SnakeCasedString(c ...rune) string {
 	if len(c) != 0 {
 		return s.Format(NewSnakeCasedStringFormat(s.GetNative(), c...))
 	}
-	return s.Format(NewSnakeCasedStringFormat(s.GetNative(), '-'))
+	return s.Format(NewSnakeCasedStringFormat(s.GetNative(), '_'))
 }
 
 func (s StringFunc) StringEncodeFunc(f StringEncodeFunc, hash hash.Hash, sum ...string) string {
