@@ -1,3 +1,3 @@
-module {{.serviceName}}
+module {{toSnakeString .serviceName '-'}}
 
 go 1.14

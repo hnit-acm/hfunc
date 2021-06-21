@@ -3,8 +3,8 @@ package main
 import (
 	"embed"
 	"fmt"
-	"github.com/hnit-acm/hfunc/basic"
-	"github.com/hnit-acm/hfunc/utils"
+	"github.com/hnit-acm/hfunc/hbasic"
+	"github.com/hnit-acm/hfunc/hutils"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,7 +16,7 @@ import (
 //go:embed template
 var templateFiles embed.FS
 
-func newService(name basic.String) bool {
+func newService(name hbasic.String) bool {
 	fileList, _ := ioutil.ReadDir("./")
 	for _, fileInfo := range fileList {
 		// 如果存在模板文件
@@ -56,7 +56,7 @@ func copyDir(src, dest, serviceName string) (err error) {
 			continue
 		}
 		t, err := template.New(info.Name()).Funcs(template.FuncMap{
-			"toSnakeString": utils.StringToSnakeCasedString,
+			"toSnakeString": hutils.StringToSnakeCasedString,
 		}).ParseFS(templateFiles, filepath.Join(src, info.Name()))
 		if err != nil {
 			fmt.Println(err)

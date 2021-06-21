@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/hnit-acm/hfunc/basic"
+	"github.com/hnit-acm/hfunc/hbasic"
 	"github.com/urfave/cli/v2"
 	"os"
 	"runtime"
@@ -38,7 +38,7 @@ func main() {
 									return errors.New("service name is not empty")
 								}
 							default:
-								if newService(basic.String(serviceName)) {
+								if newService(hbasic.String(serviceName)) {
 									return nil
 								} else {
 									return errors.New("new service failed")
@@ -58,7 +58,7 @@ func main() {
 									return errors.New("service name is not empty")
 								}
 							default:
-								if newService(basic.String(service_name)) {
+								if newService(hbasic.String(service_name)) {
 									return nil
 								} else {
 									return errors.New("new service failed")
@@ -84,6 +84,11 @@ func main() {
 						Aliases: []string{
 							"p",
 						}},
+					&cli.StringFlag{
+						Name: "rewrite",
+						Aliases: []string{
+							"r",
+						}},
 				},
 				Action: func(c *cli.Context) error {
 					path := c.Args().Get(0)
@@ -94,7 +99,9 @@ func main() {
 					if port == "" {
 						port = "4000"
 					}
-					return InitSwag(path+"/swagger.json", port)
+					rewrite := c.String("rewrite")
+
+					return InitSwag(path+"/swagger.json", port, rewrite)
 				},
 			},
 			//{
