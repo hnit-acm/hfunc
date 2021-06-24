@@ -58,11 +58,25 @@ func RegisterHandleFunc(router *gin.Engine, routeReg func(*gin.Engine) *gin.Rout
 							outs := v.Method(i).Call(nil)
 							f := outs[0].Interface().(HandleFunc)
 							httpMethod, routeUri, version, handlerFunc := f()
-							if version != "" {
+							switch {
+							case version != "" && httpMethod != "":
 								r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 								continue
+							case version != "" && httpMethod == "":
+								r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+								continue
+							case version == "" && httpMethod != "":
+								r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+								continue
+							case version == "" && httpMethod == "":
+								r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+								continue
 							}
-							r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+							//if version != "" {
+							//	r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+							//	continue
+							//}
+							//r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 						}
 					case v.Method(i).Type().ConvertibleTo(reflect.TypeOf(_emptyHandleFunc)):
 						{
@@ -71,11 +85,20 @@ func RegisterHandleFunc(router *gin.Engine, routeReg func(*gin.Engine) *gin.Rout
 								outs[1].Interface().(string),
 								outs[2].Interface().(string),
 								outs[3].Interface().(gin.HandlerFunc)
-							if version != "" {
+							switch {
+							case version != "" && httpMethod != "":
 								r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 								continue
+							case version != "" && httpMethod == "":
+								r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+								continue
+							case version == "" && httpMethod != "":
+								r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+								continue
+							case version == "" && httpMethod == "":
+								r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+								continue
 							}
-							r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 						}
 					}
 				}
@@ -83,6 +106,7 @@ func RegisterHandleFunc(router *gin.Engine, routeReg func(*gin.Engine) *gin.Rout
 			return
 		}
 	}
+	r := router
 	for _, c := range cs {
 		v := reflect.ValueOf(c)
 		for i := 0; i < v.NumMethod(); i++ {
@@ -93,10 +117,20 @@ func RegisterHandleFunc(router *gin.Engine, routeReg func(*gin.Engine) *gin.Rout
 					outs := v.Method(i).Call(nil)
 					f := outs[0].Interface().(HandleFunc)
 					httpMethod, routeUri, version, handlerFunc := f()
-					if version != "" {
-						router.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+					switch {
+					case version != "" && httpMethod != "":
+						r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+						continue
+					case version != "" && httpMethod == "":
+						r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+						continue
+					case version == "" && httpMethod != "":
+						r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+						continue
+					case version == "" && httpMethod == "":
+						r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+						continue
 					}
-					router.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 				}
 			case v.Method(i).Type().ConvertibleTo(reflect.TypeOf(_emptyHandleFunc)):
 				{
@@ -105,10 +139,20 @@ func RegisterHandleFunc(router *gin.Engine, routeReg func(*gin.Engine) *gin.Rout
 						outs[1].Interface().(string),
 						outs[2].Interface().(string),
 						outs[3].Interface().(gin.HandlerFunc)
-					if version != "" {
-						router.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+					switch {
+					case version != "" && httpMethod != "":
+						r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+						continue
+					case version != "" && httpMethod == "":
+						r.Group(version).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+						continue
+					case version == "" && httpMethod != "":
+						r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
+						continue
+					case version == "" && httpMethod == "":
+						r.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Any(routeUri, handlerFunc)
+						continue
 					}
-					router.Group(c.Version()).Group(c.RouterGroupName(), c.Middlewares()...).Handle(httpMethod, routeUri, handlerFunc)
 				}
 			}
 		}
