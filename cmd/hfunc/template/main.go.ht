@@ -56,6 +56,6 @@ func main() {
 	hapi.Server("{{.port}}",nil, func(c *gin.Engine) {
 		hapi.RegisterHandleFunc(c, func(engine *gin.Engine) *gin.RouterGroup {
 			return engine.Group("/api")
-		},controller.{{.serviceName}}Controller{})
+		},controllers.{{.serviceName}}Controller{})
 	})
 }
