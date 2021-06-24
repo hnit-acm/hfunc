@@ -11,9 +11,19 @@ type testController struct {
 
 func (testController) HelloFunc() hapi.HandleFunc {
 	return func() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
-		return "GET", "helloFunc", "", func(c *gin.Context) {
+		return "GET", "helloFuncerr", "", func(c *gin.Context) {
 			fmt.Println("runing hello world")
-			c.JSON(200, "hello world")
+			hapi.JsonResponseErr(c, AuthErr)
+			return
+		}
+	}
+}
+
+func (testController) HelloFuncok() hapi.HandleFunc {
+	return func() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
+		return "GET", "helloFuncok", "", func(c *gin.Context) {
+			fmt.Println("runing hello world")
+			hapi.JsonResponseOk(c, "ok", hapi.WithCode(200))
 			return
 		}
 	}
@@ -65,6 +75,10 @@ var test2Controller = hapi.ControllerFunc(
 				return "v2"
 			}
 	},
+)
+
+var (
+	AuthErr = hapi.NewCodeErr(200, "")
 )
 
 func main() {
