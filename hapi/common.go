@@ -35,37 +35,37 @@ const (
 	ERR
 )
 
-type Provide func(Response) Response
+type InjectFunc func(Response) Response
 
-func WithStatus(status int) Provide {
+func WithStatus(status int) InjectFunc {
 	return func(res Response) Response {
 		res.Status = status
 		return res
 	}
 }
 
-func WithData(data interface{}) Provide {
+func WithData(data interface{}) InjectFunc {
 	return func(res Response) Response {
 		res.Data = data
 		return res
 	}
 }
 
-func WithCode(code int) Provide {
+func WithCode(code int) InjectFunc {
 	return func(res Response) Response {
 		res.Code = code
 		return res
 	}
 }
 
-func WithMsg(msg string) Provide {
+func WithMsg(msg string) InjectFunc {
 	return func(res Response) Response {
 		res.Msg = msg
 		return res
 	}
 }
 
-func WithErr(err error) Provide {
+func WithErr(err error) InjectFunc {
 	return func(res Response) Response {
 		res.Msg = err.Error()
 		e, ok := err.(withCodeErr)
@@ -77,14 +77,14 @@ func WithErr(err error) Provide {
 	}
 }
 
-func JsonResponse(ctx *gin.Context, res Response, p ...Provide) {
+func JsonResponse(ctx *gin.Context, res Response, p ...InjectFunc) {
 	for _, provide := range p {
 		res = provide(res)
 	}
 	ctx.JSON(res.Status, res)
 }
 
-func JsonResponseOk(ctx *gin.Context, data interface{}, p ...Provide) {
+func JsonResponseOk(ctx *gin.Context, data interface{}, p ...InjectFunc) {
 	res := Response{
 		Status: http.StatusOK,
 		Code:   OK,
@@ -93,7 +93,7 @@ func JsonResponseOk(ctx *gin.Context, data interface{}, p ...Provide) {
 	JsonResponse(ctx, res, p...)
 }
 
-func JsonResponseErr(ctx *gin.Context, err error, p ...Provide) {
+func JsonResponseErr(ctx *gin.Context, err error, p ...InjectFunc) {
 	res := Response{
 		Status: http.StatusOK,
 		Code:   ERR,
