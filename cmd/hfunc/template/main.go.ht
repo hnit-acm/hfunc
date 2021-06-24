@@ -1,7 +1,7 @@
 package main
 
 import (
-	"{{toSnakeString .serviceName '-'}}/api/controller"
+	"{{toSnakeString .serviceName '-'}}/api/http/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/hnit-acm/hfunc/hapi"
 )
