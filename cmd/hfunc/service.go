@@ -16,7 +16,7 @@ import (
 //go:embed template
 var templateFiles embed.FS
 
-func newService(name hbasic.String) bool {
+func newService(name, port hbasic.String) bool {
 	fileList, _ := ioutil.ReadDir("./")
 	for _, fileInfo := range fileList {
 		// 如果存在模板文件
@@ -26,15 +26,21 @@ func newService(name hbasic.String) bool {
 				fmt.Println("服务已存在")
 				return false
 			}
-			copyDir(fileInfo.Name(), name.GetNative(), name.GetNative())
+			copyDir(fileInfo.Name(), name.GetNative(), map[string]string{
+				"serviceName": strings.Title(name.GetNative()),
+				"port":        port.GetNative(),
+			})
 			return true
 		}
 	}
-	copyDir("template", name.GetNative(), name.GetNative())
+	copyDir("template", name.GetNative(), map[string]string{
+		"serviceName": strings.Title(name.GetNative()),
+		"port":        port.GetNative(),
+	})
 	return true
 }
 
-func copyDir(src, dest, serviceName string) (err error) {
+func copyDir(src, dest string, params map[string]string) (err error) {
 	fileList, _ := templateFiles.ReadDir(src)
 	err = os.MkdirAll(dest, os.ModePerm)
 	if err != nil {
@@ -52,7 +58,7 @@ func copyDir(src, dest, serviceName string) (err error) {
 			if err != nil {
 				return
 			}
-			copyDir(filepath.Join(src, info.Name()), filepath.Join(dest, info.Name()), serviceName)
+			copyDir(filepath.Join(src, info.Name()), filepath.Join(dest, info.Name()), params)
 			continue
 		}
 		t, err := template.New(info.Name()).Funcs(template.FuncMap{
@@ -68,7 +74,7 @@ func copyDir(src, dest, serviceName string) (err error) {
 			fmt.Println(err)
 			return err
 		}
-		err = t.Execute(f, map[string]string{"serviceName": strings.Title(serviceName)})
+		err = t.Execute(f, params)
 		if err != nil {
 			f.Close()
 			fmt.Println(err)

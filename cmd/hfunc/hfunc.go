@@ -15,33 +15,48 @@ func main() {
 			{
 				Name:    "new",
 				Aliases: nil,
-				Usage:   "new a service or request",
+				Usage:   "new a services or request",
 				Subcommands: []*cli.Command{
 					{
-						Name:    "service",
+						Name:    "services",
 						Aliases: []string{"s"},
 						Usage:   "",
 						Flags: []cli.Flag{
+							//&cli.StringFlag{
+							//	Name: "name",
+							//	Aliases: []string{
+							//		"n",
+							//	},
+							//	Usage: "services name",
+							//},
 							&cli.StringFlag{
-								Name: "name",
+								Name: "port",
 								Aliases: []string{
-									"n",
+									"p",
 								},
-								Usage: "service name",
+								Value: "8000",
+								Usage: "port number",
 							},
 						},
 						Action: func(c *cli.Context) error {
-							serviceName := c.Args().Get(0)
+							//fmt.Println(c.String("name"))
+							//fmt.Println(c.String("port"))
+
+							//fmt.Println(c.NArg())
+							//fmt.Println(c.Args().Tail())
+							//fmt.Println(c.Args().First())
+							serviceName := c.Args().Get(c.NArg() - 1)
+							port := c.String("port")
 							switch serviceName {
 							case "":
 								{
-									return errors.New("service name is not empty")
+									return errors.New("services name is not empty")
 								}
 							default:
-								if newService(hbasic.String(serviceName)) {
+								if newService(hbasic.String(serviceName), hbasic.String(port)) {
 									return nil
 								} else {
-									return errors.New("new service failed")
+									return errors.New("new services failed")
 								}
 							}
 						},
@@ -55,13 +70,14 @@ func main() {
 							switch service_name {
 							case "":
 								{
-									return errors.New("service name is not empty")
+									return errors.New("services name is not empty")
 								}
 							default:
-								if newService(hbasic.String(service_name)) {
+								// todo
+								if newService(hbasic.String(service_name), hbasic.String(service_name)) {
 									return nil
 								} else {
-									return errors.New("new service failed")
+									return errors.New("new services failed")
 								}
 							}
 						},
@@ -71,7 +87,7 @@ func main() {
 			{
 				Name:    "sync",
 				Aliases: nil,
-				Usage:   "sync config directory between service and service",
+				Usage:   "sync config directory between services and services",
 				Action:  nil,
 			},
 			{
