@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+type Response struct {
+	Msg  string      `json:"msg"`
+	Code int         `json:"code"`
+	Data interface{} `json:"data"`
+}
+
 type {{.serviceName}}Controller struct {
 
 }
@@ -25,12 +31,17 @@ func (s {{.serviceName}}Controller) Version() string {
 	return "v1"
 }
 
+// Ping godoc
+// @Summary Ping service
+// @Description Ping service
+// @ID {{toSnakeString .serviceName}}-ping
+// @Tags 默认
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} Response{data=string} ""
+// @Router /v1/{{toSnakeString .serviceName}}/ping [get]
 func (s {{.serviceName}}Controller) Ping() (httpMethod, routeUri, version string, handlerFunc gin.HandlerFunc) {
-	return http.MethodGet, "ping", "v1", func(context *gin.Context) {
-				context.JSON(200, map[string]interface{}{
-					"msg":  "pong",
-					"code": 0,
-					"data": "pong",
-				})
+	return http.MethodGet, "ping", "v1", func(ctx *gin.Context) {
+				hapi.JsonResponseOk(ctx,"pong",hapi.WithMsg("pong"))
 	}
 }
