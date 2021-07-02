@@ -28,6 +28,12 @@ func (of optionFunc) apply(ops *options) {
 	of(ops)
 }
 
+func WithAddr(addr string) Option {
+	return optionFunc(func(o *options) {
+		o.addr = addr
+	})
+}
+
 func WithHandler(handler http.Handler) Option {
 	return optionFunc(func(o *options) {
 		o.handler = handler
