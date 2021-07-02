@@ -12,12 +12,14 @@ import (
 	"time"
 )
 
-type _GenTLSConfigOptions struct {
-	ip       string
-	hostname string
-	subject  pkix.Name
-}
-type GenTLSConfigOption func(o *_GenTLSConfigOptions)
+type (
+	_GenTLSConfigOptions struct {
+		ip       string
+		hostname string
+		subject  pkix.Name
+	}
+	GenTLSConfigOption func(o *_GenTLSConfigOptions)
+)
 
 func WithIP(ip string) GenTLSConfigOption {
 	return func(o *_GenTLSConfigOptions) {
@@ -30,6 +32,7 @@ func WithHostname(hostname string) GenTLSConfigOption {
 		o.hostname = hostname
 	}
 }
+
 func WithSubject(subject pkix.Name) GenTLSConfigOption {
 	return func(o *_GenTLSConfigOptions) {
 		o.subject = subject
@@ -72,7 +75,7 @@ func GenTLSConfig(ip, serverName string, subject pkix.Name) (conf *tls.Config, e
 	}
 	return &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
-		NextProtos:   []string{"quic", "http/3", "http/2", "http/1.1", "http/1.0"},
+		NextProtos:   []string{"h3", "h2", "h1"},
 		ServerName:   serverName,
 	}, nil
 }

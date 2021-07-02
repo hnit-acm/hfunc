@@ -16,14 +16,14 @@ import (
 // Server 启动gin hserver
 // port 端口
 // regFunc 注册的路由函数
-func Server(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
+func Serve(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
 	if g == nil {
 		g = gin.Default()
 	}
 	if regFunc != nil {
 		regFunc(g)
 	}
-	httpServer := hhttp.NewServer("tcp", ":"+port, hhttp.Handler(g))
+	httpServer := hhttp.NewServer("tcp", ":"+port, hhttp.WithHandler(g))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	group, ctx := errgroup.WithContext(ctx)
@@ -72,14 +72,14 @@ func Server(port string, g *gin.Engine, regFunc func(c *gin.Engine)) {
 // regFunc 注册的路由函数
 // clearFunc server退出逻辑处理
 // timeOut 超时时间
-func ServerTimeout(port string, g *gin.Engine, regFunc func(c *gin.Engine), clearFunc func(), timeOut time.Duration, opts ...hhttp.Option) {
+func ServeTimeout(port string, g *gin.Engine, regFunc func(c *gin.Engine), clearFunc func(), timeOut time.Duration, opts ...hhttp.Option) {
 	if g == nil {
 		g = gin.Default()
 	}
 	if regFunc != nil {
 		regFunc(g)
 	}
-	opts = append(opts, hhttp.Handler(g))
+	opts = append(opts, hhttp.WithHandler(g))
 	httpServer := hhttp.NewServer("tcp", ":"+port, opts...)
 
 	ctx, cancel := context.WithCancel(context.Background())

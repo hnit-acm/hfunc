@@ -3,61 +3,11 @@ package hhttp
 import (
 	"context"
 	"crypto/tls"
+	"github.com/hnit-acm/hfunc/hutils"
 	"net"
 	"net/http"
 	"time"
-
-	"github.com/hnit-acm/hfunc/hserver"
 )
-
-var _ hserver.Server = (*Server)(nil)
-
-// Option is HTTP hserver option.
-type Option func(o *options)
-
-// options is HTTP hserver options.
-type options struct {
-	handler      http.Handler
-	tlsConfig    *tls.Config
-	readTimeout  time.Duration
-	writeTimeout time.Duration
-	idleTimeout  time.Duration
-}
-
-// Handler with hserver handler.
-func Handler(h http.Handler) Option {
-	return func(o *options) {
-		o.handler = h
-	}
-}
-
-// TLSConfig with hserver tls config.
-func TLSConfig(c *tls.Config) Option {
-	return func(o *options) {
-		o.tlsConfig = c
-	}
-}
-
-// ReadTimeout with read timeout.
-func ReadTimeout(timeout time.Duration) Option {
-	return func(o *options) {
-		o.readTimeout = timeout
-	}
-}
-
-// WriteTimeout with write timeout.
-func WriteTimeout(timeout time.Duration) Option {
-	return func(o *options) {
-		o.writeTimeout = timeout
-	}
-}
-
-// IdleTimeout with read timeout.
-func IdleTimeout(timeout time.Duration) Option {
-	return func(o *options) {
-		o.idleTimeout = timeout
-	}
-}
 
 // Server is a HTTP hserver wrapper.
 type Server struct {
@@ -76,7 +26,7 @@ func NewServer(network, addr string, opts ...Option) *Server {
 		idleTimeout:  time.Minute,
 	}
 	for _, o := range opts {
-		o(&options)
+		o.apply(&options)
 	}
 	return &Server{
 		network: network,
@@ -104,4 +54,35 @@ func (s *Server) Start(ctx context.Context) error {
 // Stop stop the HTTP hserver.
 func (s *Server) Stop(ctx context.Context) error {
 	return s.Shutdown(ctx)
+}
+
+func New(ops ...Option) *http.Server {
+	op := options{
+		readTimeout:  time.Second,
+		writeTimeout: time.Second,
+		addr:         ":9999",
+		idleTimeout:  time.Minute,
+		handler:      http.DefaultServeMux,
+		tlsConfig:    hutils.GenTLSConfigNoErr(),
+	}
+	for _, o := range ops {
+		o.apply(&op)
+	}
+	return &http.Server{
+		Addr:         op.addr,
+		Handler:      op.handler,
+		TLSConfig:    op.tlsConfig,
+		ReadTimeout:  op.readTimeout,
+		WriteTimeout: op.writeTimeout,
+		IdleTimeout:  op.idleTimeout,
+	}
+}
+
+func ListenTLS(sever *http.Server) (err error) {
+	tcpConn, err := net.Listen("tcp", sever.Addr)
+	if err != nil {
+		return
+	}
+	tlsConn := tls.NewListener(tcpConn, sever.TLSConfig)
+	return sever.Serve(tlsConn)
 }

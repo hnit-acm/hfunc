@@ -33,7 +33,7 @@ func Middleware(c *gin.Context) {
 }
 
 func main() {
-	hapi.Server("8080", nil, func(c *gin.Engine) {
+	hapi.Serve("8080", nil, func(c *gin.Engine) {
 		Router(c, Middleware)
 	})
 }

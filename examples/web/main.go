@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/hnit-acm/hfunc/hapi"
+	"github.com/hnit-acm/hfunc/hserver/hhttp"
 )
 
 type testController struct {
@@ -82,28 +83,28 @@ var (
 )
 
 func main() {
-	hapi.Server("8080", nil, func(c *gin.Engine) {
-		hapi.Register(c,
-			func(engine *gin.Engine) *gin.RouterGroup {
-				return engine.Group("/hapi")
-			},
-			testController{},
-		)
+	c := gin.Default()
+	hapi.Register(c,
+		func(engine *gin.Engine) *gin.RouterGroup {
+			return engine.Group("/hapi")
+		},
+		testController{},
+	)
 
-		hapi.RegisterFunc(
-			c,
-			func(engine *gin.Engine) *gin.RouterGroup {
-				return engine.Group("/hapi")
-			},
-			test2Controller,
-		)
+	hapi.RegisterFunc(
+		c,
+		func(engine *gin.Engine) *gin.RouterGroup {
+			return engine.Group("/hapi")
+		},
+		test2Controller,
+	)
 
-		hapi.RegisterHandleFunc(
-			c,
-			func(engine *gin.Engine) *gin.RouterGroup {
-				return engine.Group("/hapi")
-			},
-			testController{},
-		)
-	})
+	hapi.RegisterHandleFunc(
+		c,
+		func(engine *gin.Engine) *gin.RouterGroup {
+			return engine.Group("/hapi")
+		},
+		testController{},
+	)
+	hapi.ServeAny(hhttp.WithHandler(c))
 }
