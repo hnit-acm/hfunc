@@ -1,30 +1,23 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/hnit-acm/hfunc/hapi"
+	"github.com/hnit-acm/hfunc/hserver/hhttp"
 	"github.com/lucas-clemente/quic-go/http3"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/swag"
 	"io/ioutil"
-	"math/big"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
-	"time"
 )
 
 type s struct {
@@ -110,104 +103,5 @@ func InitSwag(filePath, port, rewrite string) error {
 		return
 	})
 	logh.Info(fmt.Sprintf("swag: ui:\t\thttps://127.0.0.1:%v/swagger/index.html\n", port))
-
-	return server(":"+port, r, generateTLSConfig())
-}
-
-func generateTLSConfig() *tls.Config {
-	max := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, _ := rand.Int(rand.Reader, max)
-	subject := pkix.Name{
-		Country:            []string{"CN"},
-		Province:           []string{"BeiJing"},
-		Organization:       []string{"Devops"},
-		OrganizationalUnit: []string{"certDevops"},
-		CommonName:         "127.0.0.1",
-	}
-
-	template := x509.Certificate{
-		SerialNumber: serialNumber,
-		Subject:      subject,
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
-		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
-	}
-
-	pk, _ := rsa.GenerateKey(rand.Reader, 2048)
-
-	derBytes, _ := x509.CreateCertificate(rand.Reader, &template, &template, &pk.PublicKey, pk)
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(pk)})
-
-	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
-	if err != nil {
-		panic(err)
-	}
-	return &tls.Config{
-		Certificates: []tls.Certificate{tlsCert},
-		NextProtos:   []string{"hfunc"},
-	}
-}
-
-func server(addr string, handler http.Handler, config *tls.Config) error {
-	var err error
-	udpAddr, err := net.ResolveUDPAddr("udp", addr)
-	if err != nil {
-		return err
-	}
-	udpConn, err := net.ListenUDP("udp", udpAddr)
-	if err != nil {
-		return err
-	}
-	defer udpConn.Close()
-
-	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
-	if err != nil {
-		return err
-	}
-	tcpConn, err := net.ListenTCP("tcp", tcpAddr)
-	if err != nil {
-		return err
-	}
-	defer tcpConn.Close()
-
-	tlsConn := tls.NewListener(tcpConn, config)
-	defer tlsConn.Close()
-
-	httpServer := &http.Server{
-		Addr:      addr,
-		TLSConfig: config,
-	}
-
-	quicServer := &http3.Server{
-		Server: httpServer,
-	}
-
-	if handler == nil {
-		handler = http.DefaultServeMux
-	}
-	httpServer.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		quicServer.SetQuicHeaders(w.Header())
-		handler.ServeHTTP(w, r)
-	})
-
-	hErr := make(chan error)
-	qErr := make(chan error)
-	go func() {
-		hErr <- httpServer.Serve(tlsConn)
-	}()
-	go func() {
-		qErr <- quicServer.Serve(udpConn)
-	}()
-
-	select {
-	case err := <-hErr:
-		quicServer.Close()
-		return err
-	case err := <-qErr:
-		return err
-	}
+	return hapi.ServeAny(hhttp.WithHandler(r), hhttp.WithAddr(":"+port))
 }
